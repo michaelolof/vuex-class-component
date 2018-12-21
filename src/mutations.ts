@@ -1,6 +1,6 @@
 import { _mutations } from ".";
 
-type MutationDescriptor = TypedPropertyDescriptor<(payload?:any) => void>
+export type MutationDescriptor = TypedPropertyDescriptor<(payload?:any) => void>
 
 export function mutation<T, U>( target:T, key:string, descriptor:MutationDescriptor ) {
   const func:Function = descriptor.value || new Function()
