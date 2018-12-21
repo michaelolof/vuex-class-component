@@ -12,7 +12,7 @@ const fetchStateFromClassInstance = (obj:VuexModule) => Object.getOwnPropertyNam
 
 export abstract class VuexModule {
 
-  static CreatedProxy<V extends VuexModule>( $store:Store<any>, cls:VuexClassConstructor<V> ) {
+  static CreateProxy<V extends VuexModule>( $store:Store<any>, cls:VuexClassConstructor<V> ) {
     let rtn:Record<any, any> = {}
     const path = cls.prototype[ _namespacedPath ]; 
     const prototype = this.prototype as any
@@ -30,7 +30,7 @@ export abstract class VuexModule {
         } 
       });
 
-      (prototype[ _actions_register ] as ActionRegister[]).map( reg => {
+      ((prototype[ _actions_register ] || []) as ActionRegister[]).map( reg => {
         rtn[ reg.name ] = function( payload?:any ) {
           return $store.dispatch( path + reg.name, payload );
         }
@@ -100,8 +100,3 @@ export function Module(options = defaultOptions ) {
   }
 }
 
-function createProxyProperty(cls:VuexClassConstructor<VuexModule>, $this:Storable) {
-  Object.getOwnPropertyNames( cls.prototype[ _getters ] ).map( gettername => {
-       $this.$store.getters[ gettername ]
-  })
-}
