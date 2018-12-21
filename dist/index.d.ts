@@ -1,0 +1,12 @@
+export declare const _state: unique symbol;
+export declare const _mutations: unique symbol;
+export declare const _getters: unique symbol;
+export declare const _actions_register: unique symbol;
+export declare const _map: unique symbol;
+export declare const _proxy: unique symbol;
+export declare const _store: unique symbol;
+export declare const _namespacedPath: unique symbol;
+export * from "./module";
+export * from "./mutations";
+export * from "./actions";
+export * from "./getters";

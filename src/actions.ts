@@ -1,7 +1,7 @@
 import { VuexClassConstructor, VuexModule } from "./module";
 import { _actions_register, _mutations, _state, _getters } from ".";
 
-type ActionDescriptor = TypedPropertyDescriptor<(payload?:any) => Promise<any>>
+export type ActionDescriptor = TypedPropertyDescriptor<(payload?:any) => Promise<any>>
 
 export interface ActionRegister {
   name:string;
