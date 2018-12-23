@@ -9,7 +9,7 @@ export interface ActionRegister {
   descriptor:ActionDescriptor;
 }
 
-interface ActionOption {
+export interface ActionOption {
   mode:"mutate"|"raw";
 }
 
