@@ -1,14 +1,8 @@
-import { getActions, ActionRegister } from "./actions";
-import { _state, _mutations, _getters, _proxy, _map, _store, _namespacedPath, _actions_register } from ".";
+import { getMutatedActions } from "./actions";
+import { _state, _mutations, _getters, _proxy, _map, _store, _namespacedPath, _actions_register, _actions } from ".";
 import { Store } from "vuex";
 
-interface Storable {
-  $store: Store<any>
-}
-
 export type VuexClassConstructor<T> = new () => T
-
-const fetchStateFromClassInstance = (obj:VuexModule) => Object.getOwnPropertyNames( obj ).filter( v => v === "__store__" ? false : true );
 
 export abstract class VuexModule {
 
@@ -30,9 +24,9 @@ export abstract class VuexModule {
         } 
       });
 
-      ((prototype[ _actions_register ] || []) as ActionRegister[]).map( reg => {
-        rtn[ reg.name ] = function( payload?:any ) {
-          return $store.dispatch( path + reg.name, payload );
+      Object.getOwnPropertyNames( prototype[ _actions ] || {} ).map( name => {
+        rtn[ name ] = function( payload?:any ) {
+          return $store.dispatch( path + name, payload );
         }
       });
       
@@ -47,8 +41,12 @@ export abstract class VuexModule {
   }
   
   static ExtractVuexModule<T extends VuexModule>( cls:VuexClassConstructor<T> ) {
-    const actions = getActions( cls );
-    
+    const mutatedAction = getMutatedActions( cls );
+    const rawActions = cls.prototype[ _actions ] as Record<any, any>;
+    const actions = { ...mutatedAction, ...rawActions }
+    //Update prototype with mutated actions.
+    cls.prototype[ _actions ] = actions;
+
     const mod = {
       namespaced:  cls.prototype[ _namespacedPath ].length > 0 ? true : false,
       state: cls.prototype[ _state ],
@@ -60,6 +58,7 @@ export abstract class VuexModule {
     return mod;   
   }
 }
+
 const defaultOptions = {
   namespacedPath: "" as string
 }
@@ -68,7 +67,7 @@ export function Module(options = defaultOptions ) {
   return function<T extends VuexModule>( target:VuexClassConstructor<T> ):void {
     const targetInstance = new target();
      
-    const states = fetchStateFromClassInstance( targetInstance );
+    const states = Object.getOwnPropertyNames( targetInstance );
     const stateObj:object = {}
     if( target.prototype[ _map ] === undefined ) target.prototype[ _map ] = [];  
     

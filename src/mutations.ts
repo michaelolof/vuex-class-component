@@ -2,19 +2,20 @@ import { _mutations } from ".";
 
 export type MutationDescriptor = TypedPropertyDescriptor<(payload?:any) => void>
 
-export function mutation<T, U>( target:T, key:string, descriptor:MutationDescriptor ) {
+export function mutation( target:any, key:string, descriptor:MutationDescriptor ) {
   const func:Function = descriptor.value || new Function()
   const newFunc = function(state:any, payload:object) {
     func.call( state, payload );
   }
 
-  const mutations = (target as any)[ _mutations ];
+  const mutations = target[ _mutations ];
   if( mutations === undefined ) {
-    (target as any)[ _mutations ] = {
+    target[ _mutations ] = {
       [ key ]: newFunc,
     }
   }
   else {
-    (target as any)[ _mutations ][ key ] = newFunc
+    target[ _mutations ][ key ] = newFunc
   }
 }
+

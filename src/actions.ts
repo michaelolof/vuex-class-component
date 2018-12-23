@@ -1,5 +1,6 @@
 import { VuexClassConstructor, VuexModule } from "./module";
-import { _actions_register, _mutations, _state, _getters } from ".";
+import { _actions_register, _mutations, _state, _getters, _actions } from ".";
+import { ActionContext } from 'vuex';
 
 export type ActionDescriptor = TypedPropertyDescriptor<(payload?:any) => Promise<any>>
 
@@ -8,7 +9,38 @@ export interface ActionRegister {
   descriptor:ActionDescriptor;
 }
 
-export function action(target:any, key:string, descriptor:ActionDescriptor) {
+interface ActionOption {
+  mode:"mutate"|"raw";
+}
+
+export function action(options:ActionOption = { mode:"mutate"}) {
+  switch( options.mode ) {
+    case "mutate": return mutateAction;
+    case "raw": return rawAction;
+  }
+}
+
+export function getRawActionContext<T extends VuexModule, R>( thisArg:ThisType<T> ) {
+  return thisArg as ActionContext<T, R>
+}
+
+function rawAction(target:any, key:string, descriptor:ActionDescriptor) {
+  const func = descriptor.value || new Function()
+  const vuexFunc = function(context:any, payload:any) {
+    return func.call( context, payload );
+  }
+  const actions = target[ _actions ];
+  if( actions === undefined ) {
+    target[ _actions ] = {
+      [ key ]: vuexFunc
+    }
+  } 
+  else {
+    target[ _actions ][ key ] = vuexFunc;
+  }
+}
+
+function mutateAction(target:any, key:string, descriptor:ActionDescriptor) {
   if( target[ _actions_register ] === undefined ) {
     target[ _actions_register ] = [<ActionRegister>{ name:key, descriptor }]
   }
@@ -17,16 +49,15 @@ export function action(target:any, key:string, descriptor:ActionDescriptor) {
   }
 }
 
-export function getActions<T extends VuexModule>(cls:VuexClassConstructor<T> ) {
+export function getMutatedActions<T extends VuexModule>(cls:VuexClassConstructor<T> ) {
+  const actions:Record<any, any> = {}; 
   const actionsRegister = cls.prototype[ _actions_register ] as ActionRegister[] | undefined;  
-  if( actionsRegister === undefined || actionsRegister.length === 0 ) return;
+  if( actionsRegister === undefined || actionsRegister.length === 0 ) return actions;
  
   const mutationsList = Object.getOwnPropertyNames( cls.prototype[ _mutations ] || {} );
   const actionsList = actionsRegister.map( action => action.name );
   const statesList = Object.getOwnPropertyNames( cls.prototype[ _state ] || {} );
   const gettersList = Object.getOwnPropertyNames( cls.prototype[ _getters ] || {} );
-
-  const actions:Record<any, any> = {};
 
   for(let action of actionsRegister) {
     let funcString = cls.prototype[ action.name ].toString() as string;
