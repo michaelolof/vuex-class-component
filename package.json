@@ -1,5 +1,5 @@
 {
-  "name": "vuex-ts",
+  "name": "vuex-component-class",
   "version": "1.0.0",
   "description": "\"A TypeScript Wrapper for Vuex State Manager using ES7 Decorators.\"",
   "main": "dist/index.js",
@@ -10,7 +10,10 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
+    "Typesafe Vuex",
+    "Vuex Classes",
     "Vuex State Manager",
+    "Vuex with Type Support",
     "TypeScript Vuex",
     "Vuex TypeScript"
   ],
