@@ -60,19 +60,23 @@ interface Name {
 
 @Module({ namespacedPath: "user/" })
 export class UserStore extends VuexModule {
+  
   private firstname = "Michael";
   private lastname = "Olofinjana";
   @getter specialty = "JavaScript";
   @getter occupation = "Developer";
 
-  @mutation changeName({firstname, lastname}:Name) {
+  @mutation 
+  changeName({firstname, lastname}:Name) {
     this.firstname = firstname;
     this.lastname = lastname;
   }
 
-  @action() doSomethingAsync() { ... }
+  @action() 
+  doSomethingAsync() { ... }
 
-  @action() doAnotherAsyncStuff(payload) { ... }
+  @action() 
+  doAnotherAsyncStuff(payload) { ... }
 
   get fullName() {
     return this.firstname + " " + this.lastname;
@@ -101,6 +105,7 @@ To do this is we just create a proxy in our Vue Component.
 ```
   @Component
   export class MyComponent extends Vue {
+    
     user = UserStore.CreateProxy( this.$store, UserStore );
 
     mounted() {
@@ -151,14 +156,17 @@ Actions in vuex-class-components come in two modes "mutate" and "raw".
 
   @Module()
   class MyModule extends VuexModule {
+    
     private name = "John Doe";
     @getter occupation = "Engineer"
     
-    @mutation changeOccupation(occupation) {
+    @mutation 
+    changeOccupation(occupation) {
       this.occupation = occupation;
     }
 
-    @action() dummyAction() { ... }
+    @action() 
+    dummyAction() { ... }
 
     @action({ mode:"mutate"})
     mutatedAction(payload) {
@@ -189,4 +197,4 @@ Mutated actions are great for simple chainable promise calls where async/await i
 \
 \
 All actions MUST return a promise.\
-All actions proxies are totally type safe.
+All actions proxies are totally type safe whether mutatated or raw.
