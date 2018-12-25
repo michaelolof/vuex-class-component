@@ -1,7 +1,7 @@
 {
   "name": "vuex-component-class",
   "version": "1.0.0",
-  "description": "\"A TypeScript Wrapper for Vuex State Manager using ES7 Decorators.\"",
+  "description": "\"A Type Safe Vuex Module or Store Using ES6 Classes and ES7 Decorators written in TypeScript.\"",
   "main": "dist/index.js",
   "directories": {
     "test": "test"
