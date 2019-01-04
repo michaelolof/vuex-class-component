@@ -1,12 +1,25 @@
-import { getMutatedActions } from "./actions";
-import { _state, _mutations, _getters, _proxy, _map, _store, _namespacedPath, _actions_register, _actions } from ".";
+import { getMutatedActions, ActionRegister } from "./actions";
+import { _state, _mutations, _getters, _proxy, _map, _store, _namespacedPath, _actions_register, _actions, MutationFunction, GetterFunction, ActionFunction, VuexMap, _submodule, SubModuleObject, _module } from ".";
 import { Store } from "vuex";
 
 export type VuexClassConstructor<T> = new () => T
 
-export abstract class VuexModule {
 
-  static CreateProxy<V extends VuexModule>( $store:Store<any>, cls:VuexClassConstructor<V> ) {
+export class VuexModule {  
+  [ _state ]:Record<string, any> = {}; 
+  [ _mutations ]:Record<string, MutationFunction> = {};
+  [ _getters ]: Record<string, GetterFunction> = {};
+  [ _actions_register ]:ActionRegister[] = [];
+  [ _actions ]: Record<string, ActionFunction> = {};
+  [ _map ]:VuexMap[] = [];
+  [ _proxy ]:Record<string,any> = {};
+  [ _store ]:Record<string, any> = {};
+  [ _namespacedPath ] = "";
+  [ _submodule ]:Record<string, typeof VuexModule> = {};
+  [ _module ]:Record<string,any> = {};
+
+  
+  static CreateProxy<V extends typeof VuexModule>( $store:Store<any>, cls:V ) {
     let rtn:Record<any, any> = {}
     const path = cls.prototype[ _namespacedPath ]; 
     const prototype = this.prototype as any
@@ -29,6 +42,12 @@ export abstract class VuexModule {
           return $store.dispatch( path + name, payload );
         }
       });
+
+      Object.getOwnPropertyNames( cls.prototype[_submodule] || {} ).map( name => {
+        const vxmodule = cls.prototype[ _submodule ][ name ];
+        vxmodule.prototype[_namespacedPath] = path + name + "/";
+        rtn[ name ] = vxmodule.CreateProxy( $store, vxmodule );
+      })
       
       // Cache proxy.
       prototype[ _proxy ] = rtn;
@@ -37,10 +56,10 @@ export abstract class VuexModule {
       // Use cached proxy.
       rtn = prototype[ _proxy ];
     }
-    return rtn as V;
+    return rtn as InstanceType<V>;
   }
   
-  static ExtractVuexModule<T extends VuexModule>( cls:VuexClassConstructor<T> ) {
+  static ExtractVuexModule( cls:typeof VuexModule ) {
     const mutatedAction = getMutatedActions( cls );
     const rawActions = cls.prototype[ _actions ] as Record<any, any>;
     const actions = { ...mutatedAction, ...rawActions }
@@ -53,6 +72,7 @@ export abstract class VuexModule {
       mutations: cls.prototype[ _mutations ],
       actions,
       getters: cls.prototype[ _getters ],
+      modules: cls.prototype[ _module ],
     };
 
     return mod;   
@@ -64,17 +84,24 @@ const defaultOptions = {
 }
 export function Module(options = defaultOptions ) {
   
-  return function<T extends VuexModule>( target:VuexClassConstructor<T> ):void {
+  return function( target:typeof VuexModule ):void {
     const targetInstance = new target();
      
     const states = Object.getOwnPropertyNames( targetInstance );
-    const stateObj:object = {}
+    const stateObj:Record<string,any> = {}
     if( target.prototype[ _map ] === undefined ) target.prototype[ _map ] = [];  
     
-    for(let state of states) { 
+    for(let stateField of states) {
       // @ts-ignore
-      stateObj[ state ] = targetInstance[ state ]
-      target.prototype[ _map ].push({ value:state, type:"state"});  
+      const stateValue = targetInstance[ stateField ]; 
+      if( stateValue === undefined ) continue;
+      
+      if( subModuleObjectIsFound( stateValue ) ) {
+        handleSubModule( target, stateField, stateValue )
+        continue; 
+      }     
+      stateObj[ stateField ] = stateValue;
+      target.prototype[ _map ].push({ value:stateField, type:"state"});  
     }
 
     target.prototype[ _state ] = stateObj;
@@ -91,11 +118,25 @@ export function Module(options = defaultOptions ) {
       }
     }
     
-    
-    if( options ) {
-      target.prototype[ _namespacedPath ] = options.namespacedPath;
-    }
+    if( options ) target.prototype[ _namespacedPath ] = options.namespacedPath;
   
   }
 }
 
+function subModuleObjectIsFound(stateValue:any): stateValue is SubModuleObject {
+  return typeof stateValue === "object" && stateValue.type === _submodule
+}
+
+function handleSubModule(target:typeof VuexModule, stateField:string, stateValue:SubModuleObject) {
+  if( target.prototype[ _module ] === undefined ) {
+    target.prototype[ _module ] = {
+      [ stateField ]: stateValue.store.ExtractVuexModule( stateValue.store ),
+    }
+    target.prototype[ _submodule ] = {
+      [ stateField ]: stateValue.store
+    }
+  } else {
+    target.prototype[_module][ stateField ] = stateValue.store.ExtractVuexModule( stateValue.store );
+    target.prototype[_submodule][ stateField ] = stateValue.store;
+  }
+}

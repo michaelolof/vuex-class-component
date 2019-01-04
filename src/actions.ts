@@ -40,16 +40,16 @@ function rawAction(target:any, key:string, descriptor:ActionDescriptor) {
   }
 }
 
-function mutateAction(target:any, key:string, descriptor:ActionDescriptor) {
+function mutateAction(target:VuexModule, key:string, descriptor:ActionDescriptor) {
   if( target[ _actions_register ] === undefined ) {
-    target[ _actions_register ] = [<ActionRegister>{ name:key, descriptor }]
+    target[ _actions_register ] = [ { name:key, descriptor }]
   }
   else {
-    target[ _actions_register ].push(<ActionRegister>{ name:key, descriptor });
+    target[ _actions_register ].push({ name:key, descriptor });
   }
 }
 
-export function getMutatedActions<T extends VuexModule>(cls:VuexClassConstructor<T> ) {
+export function getMutatedActions(cls:typeof VuexModule ) {
   const actions:Record<any, any> = {}; 
   const actionsRegister = cls.prototype[ _actions_register ] as ActionRegister[] | undefined;  
   if( actionsRegister === undefined || actionsRegister.length === 0 ) return actions;
@@ -60,7 +60,7 @@ export function getMutatedActions<T extends VuexModule>(cls:VuexClassConstructor
   const gettersList = Object.getOwnPropertyNames( cls.prototype[ _getters ] || {} );
 
   for(let action of actionsRegister) {
-    let funcString = cls.prototype[ action.name ].toString() as string;
+    let funcString = action.descriptor.value!.toString();
     funcString = funcString.replace( /_?this(([\s]+)?)\.(([\s]+)?)\$?[_a-zA-Z]+(([\s]+)?)\(/g, functionCall => {
       const name = getFunctionName( functionCall );
       const type = checkTypeOfFunction( name );
