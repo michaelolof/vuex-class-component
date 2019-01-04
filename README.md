@@ -150,6 +150,32 @@ A vuex manager is simply an exportable object that houses all our proxies. We ca
 ```
 With this any component that imports **vxm** can easily use any vuex module without any hassle with full type support and intellisense.
 
+## SubModules Support 
+From version 1.1 We now get the ability to include sub modules in our Vuex Classes.
+Let say we had a sub module called `CarStore`
+```
+  @Module({ namespacedPath: "car/" })
+  class CarStore extends VuexModule {
+    @getter noOfWheels = 4;
+
+    @action()
+    drive() {
+      console.log("driving on", this.noOfWheels, "wheels" )
+    }
+  }
+```
+We could use this sub module in a class
+```
+  @Module({ namespacedPath: "vehicle/" })
+  class Vehicle extends VuexModule {
+    car = CarStore.CreateSubModule( CarStore );
+  }
+```
+Now you can easily use in your Vue Components like:
+```
+  vxm.vehicle.car.drive() // driving on 4 wheels
+```
+
 ## A note on Vuex Actions?
 Vuex actions are particularly tricky to get working due to their **context** nature. But writing and using actions with type safety is not impossible.\
 \

@@ -6,19 +6,14 @@ export type VuexClassConstructor<T> = new () => T
 
 
 export class VuexModule {  
-  [ _state ]:Record<string, any> = {}; 
-  [ _mutations ]:Record<string, MutationFunction> = {};
-  [ _getters ]: Record<string, GetterFunction> = {};
-  [ _actions_register ]:ActionRegister[] = [];
-  [ _actions ]: Record<string, ActionFunction> = {};
-  [ _map ]:VuexMap[] = [];
-  [ _proxy ]:Record<string,any> = {};
-  [ _store ]:Record<string, any> = {};
-  [ _namespacedPath ] = "";
-  [ _submodule ]:Record<string, typeof VuexModule> = {};
-  [ _module ]:Record<string,any> = {};
 
-  
+  static CreateSubModule<V extends typeof VuexModule>( SubModule:V ) {
+    return {
+      type: _submodule,
+      store: SubModule,   
+    }  as InstanceType<V>
+  }
+ 
   static CreateProxy<V extends typeof VuexModule>( $store:Store<any>, cls:V ) {
     let rtn:Record<any, any> = {}
     const path = cls.prototype[ _namespacedPath ]; 
@@ -78,6 +73,21 @@ export class VuexModule {
     return mod;   
   }
 }
+
+export interface VuexModule {
+  [ _state ]:Record<string, any>; 
+  [ _mutations ]:Record<string, MutationFunction>;
+  [ _getters ]: Record<string, GetterFunction>;
+  [ _actions_register ]:ActionRegister[];
+  [ _actions ]: Record<string, ActionFunction>;
+  [ _map ]:VuexMap[];
+  [ _proxy ]:Record<string,any>;
+  [ _store ]:Record<string, any>;
+  [ _namespacedPath ]:string;
+  [ _submodule ]:Record<string, typeof VuexModule>;
+  [ _module ]:Record<string,any>;
+}
+
 
 const defaultOptions = {
   namespacedPath: "" as string
