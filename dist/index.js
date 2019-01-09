@@ -12,6 +12,8 @@ exports._map = Symbol("map");
 exports._proxy = Symbol("proxy_prototype");
 exports._store = Symbol("store");
 exports._namespacedPath = Symbol("namespacedPath");
+exports._submodule = Symbol("submodule");
+exports._module = Symbol("module");
 __export(require("./module"));
 __export(require("./mutations"));
 __export(require("./actions"));

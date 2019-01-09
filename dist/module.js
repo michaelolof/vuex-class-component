@@ -13,6 +13,12 @@ var _1 = require(".");
 var VuexModule = /** @class */ (function () {
     function VuexModule() {
     }
+    VuexModule.CreateSubModule = function (SubModule) {
+        return {
+            type: _1._submodule,
+            store: SubModule,
+        };
+    };
     VuexModule.CreateProxy = function ($store, cls) {
         var rtn = {};
         var path = cls.prototype[_1._namespacedPath];
@@ -32,6 +38,11 @@ var VuexModule = /** @class */ (function () {
                 rtn[name] = function (payload) {
                     return $store.dispatch(path + name, payload);
                 };
+            });
+            Object.getOwnPropertyNames(cls.prototype[_1._submodule] || {}).map(function (name) {
+                var vxmodule = cls.prototype[_1._submodule][name];
+                vxmodule.prototype[_1._namespacedPath] = path + name + "/";
+                rtn[name] = vxmodule.CreateProxy($store, vxmodule);
             });
             // Cache proxy.
             prototype[_1._proxy] = rtn;
@@ -54,6 +65,7 @@ var VuexModule = /** @class */ (function () {
             mutations: cls.prototype[_1._mutations],
             actions: actions,
             getters: cls.prototype[_1._getters],
+            modules: cls.prototype[_1._module],
         };
         return mod;
     };
@@ -72,10 +84,17 @@ function Module(options) {
         if (target.prototype[_1._map] === undefined)
             target.prototype[_1._map] = [];
         for (var _i = 0, states_1 = states; _i < states_1.length; _i++) {
-            var state = states_1[_i];
+            var stateField = states_1[_i];
             // @ts-ignore
-            stateObj[state] = targetInstance[state];
-            target.prototype[_1._map].push({ value: state, type: "state" });
+            var stateValue = targetInstance[stateField];
+            if (stateValue === undefined)
+                continue;
+            if (subModuleObjectIsFound(stateValue)) {
+                handleSubModule(target, stateField, stateValue);
+                continue;
+            }
+            stateObj[stateField] = stateValue;
+            target.prototype[_1._map].push({ value: stateField, type: "state" });
         }
         target.prototype[_1._state] = stateObj;
         var fields = Object.getOwnPropertyDescriptors(target.prototype);
@@ -93,10 +112,27 @@ function Module(options) {
         for (var field in fields) {
             _loop_1(field);
         }
-        if (options) {
+        if (options)
             target.prototype[_1._namespacedPath] = options.namespacedPath;
-        }
     };
 }
 exports.Module = Module;
+function subModuleObjectIsFound(stateValue) {
+    return typeof stateValue === "object" && stateValue.type === _1._submodule;
+}
+function handleSubModule(target, stateField, stateValue) {
+    if (target.prototype[_1._module] === undefined) {
+        target.prototype[_1._module] = (_a = {},
+            _a[stateField] = stateValue.store.ExtractVuexModule(stateValue.store),
+            _a);
+        target.prototype[_1._submodule] = (_b = {},
+            _b[stateField] = stateValue.store,
+            _b);
+    }
+    else {
+        target.prototype[_1._module][stateField] = stateValue.store.ExtractVuexModule(stateValue.store);
+        target.prototype[_1._submodule][stateField] = stateValue.store;
+    }
+    var _a, _b;
+}
 //# sourceMappingURL=module.js.map

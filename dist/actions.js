@@ -48,7 +48,7 @@ function getMutatedActions(cls) {
     var gettersList = Object.getOwnPropertyNames(cls.prototype[_1._getters] || {});
     for (var _i = 0, actionsRegister_1 = actionsRegister; _i < actionsRegister_1.length; _i++) {
         var action_1 = actionsRegister_1[_i];
-        var funcString = cls.prototype[action_1.name].toString();
+        var funcString = action_1.descriptor.value.toString();
         funcString = funcString.replace(/_?this(([\s]+)?)\.(([\s]+)?)\$?[_a-zA-Z]+(([\s]+)?)\(/g, function (functionCall) {
             var name = getFunctionName(functionCall);
             var type = checkTypeOfFunction(name);
