@@ -2,3 +2,4 @@ src/
 test/
 tsconfig.json
 node_modules
+.vscode/
