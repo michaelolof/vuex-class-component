@@ -12,11 +12,16 @@ This module has no external dependencies.
 
 ## Installation
 ```
-npm install --save vuex-class-component
+$ npm install --save vuex-class-component
 ```
+
+## Examples
+  - Vuex Class Component Simple: https://github.com/michaelolof/vuex-class-component-simple
+  - Vuex Class Component Test: https://github.com/michaelolof/vuex-class-component-test
+
 ## How to use
 Consider this example.
-```
+```js
   const user = {
     namespace: true,
     state: {
@@ -49,7 +54,7 @@ This is how we previously wrote Vuex Modules. Some of the obvious difficulties w
 * We also don't have any type secure way to use this module in our Vue components. We have to use strings to handle getters, commits and dispatch calls. This can easily lead to bugs.
 
 A better approach to solving this problem would be to use a VuexModule class as follows.
-```
+```ts
 import { VuexModule, mutation, action, getter, Module } from "vuex-class-component";
 
 // TypeScript Only. (JavaScript devs don't need this)
@@ -86,11 +91,11 @@ export class UserStore extends VuexModule {
 This is a significant improvement over our initial method. First we get type safety out of the box since we're using classes without doing much work. Also note that **occupation** and **specialty** don't need to be redefined as getters any longer. Just import the getter decorator, use it on an already defined state and it automatically becomes a getter. This is useful when you have a long list of initialized state you also want to make available as getters. Which is also why state that are not getters must be **private**\
 \
 We can then extract the actual vuex object:
-```
+```ts
 export const user = UserStore.ExtractVuexModule( UserStore );
 ```
 Then simply place in your Vuex Store.
-```
+```ts
   export const store = new Vuex.Store({
     modules: {
       user,
@@ -102,7 +107,7 @@ Then simply place in your Vuex Store.
 Ensuring type safety in Vuex Modules is just one half of the problem solved. We still need to use them in our Vue Components.\
 \
 To do this is we just create a proxy in our Vue Component.
-```
+```ts
   @Component
   export class MyComponent extends Vue {
     
@@ -128,7 +133,7 @@ The only problem here is, in reality we might have one component making request 
 
 ### Vuex Manager
 A vuex manager is simply an exportable object that houses all our proxies. We can easily create a vuex manager in our original vuex store file. (See Example)
-```
+```ts
   /** in store.ts/store.js */
   export const store = new Vuex.Store({
     modules: {
@@ -153,7 +158,7 @@ With this any component that imports **vxm** can easily use any vuex module with
 ## SubModules Support 
 From version 1.1 We now get the ability to include sub modules in our Vuex Classes.
 Let say we had a sub module called `CarStore`
-```
+```ts
   @Module({ namespacedPath: "car/" })
   class CarStore extends VuexModule {
     @getter noOfWheels = 4;
@@ -165,14 +170,14 @@ Let say we had a sub module called `CarStore`
   }
 ```
 We could use this sub module in a class
-```
+```ts
   @Module({ namespacedPath: "vehicle/" })
   class Vehicle extends VuexModule {
     car = CarStore.CreateSubModule( CarStore );
   }
 ```
 Now you can easily use in your Vue Components like:
-```
+```ts
   vxm.vehicle.car.drive() // driving on 4 wheels
 ```
 
@@ -182,7 +187,7 @@ Vuex actions are particularly tricky to get working due to their **context** nat
 To ensure type safety and still maintain flexibility so you are not limited by the library, actions in vuex-class-components come in two modes "mutate" or "raw". By default the mode is set to "mutate"\
 \
 Example:
-```
+```ts
   import { getRawActionContext } from "vuex-class-component";
 
   @Module()
