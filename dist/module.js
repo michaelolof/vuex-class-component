@@ -20,43 +20,12 @@ var VuexModule = /** @class */ (function () {
         };
     };
     VuexModule.CreateProxy = function ($store, cls) {
-        var rtn = {};
-        var path = cls.prototype[_1._namespacedPath];
-        var prototype = this.prototype;
-        if (prototype[_1._proxy] === undefined) { // Proxy has not been cached.
-            Object.getOwnPropertyNames(prototype[_1._getters] || {}).map(function (name) {
-                Object.defineProperty(rtn, name, {
-                    get: function () { return $store.getters[path + name]; }
-                });
-            });
-            Object.getOwnPropertyNames(prototype[_1._mutations] || {}).map(function (name) {
-                rtn[name] = function (payload) {
-                    $store.commit(path + name, payload);
-                };
-            });
-            Object.getOwnPropertyNames(prototype[_1._actions] || {}).map(function (name) {
-                rtn[name] = function (payload) {
-                    return $store.dispatch(path + name, payload);
-                };
-            });
-            Object.getOwnPropertyNames(cls.prototype[_1._submodule] || {}).map(function (name) {
-                var vxmodule = cls.prototype[_1._submodule][name];
-                vxmodule.prototype[_1._namespacedPath] = path + name + "/";
-                rtn[name] = vxmodule.CreateProxy($store, vxmodule);
-            });
-            // Cache proxy.
-            prototype[_1._proxy] = rtn;
-        }
-        else {
-            // Use cached proxy.
-            rtn = prototype[_1._proxy];
-        }
-        return rtn;
+        return createProxy($store, cls, _1._proxy);
     };
     VuexModule.ExtractVuexModule = function (cls) {
-        var mutatedAction = actions_1.getMutatedActions(cls);
+        var proxiedActions = actions_1.getMutatedActions(cls);
         var rawActions = cls.prototype[_1._actions];
-        var actions = __assign({}, mutatedAction, rawActions);
+        var actions = __assign({}, proxiedActions, rawActions);
         //Update prototype with mutated actions.
         cls.prototype[_1._actions] = actions;
         var mod = {
@@ -72,6 +41,41 @@ var VuexModule = /** @class */ (function () {
     return VuexModule;
 }());
 exports.VuexModule = VuexModule;
+function createProxy($store, cls, cachePath) {
+    var rtn = {};
+    var path = cls.prototype[_1._namespacedPath];
+    var prototype = cls.prototype;
+    if (prototype[cachePath] === undefined) { // Proxy has not been cached.
+        Object.getOwnPropertyNames(prototype[_1._getters] || {}).map(function (name) {
+            Object.defineProperty(rtn, name, {
+                get: function () { return $store.getters[path + name]; }
+            });
+        });
+        Object.getOwnPropertyNames(prototype[_1._mutations] || {}).map(function (name) {
+            rtn[name] = function (payload) {
+                $store.commit(path + name, payload);
+            };
+        });
+        Object.getOwnPropertyNames(prototype[_1._actions] || {}).map(function (name) {
+            rtn[name] = function (payload) {
+                return $store.dispatch(path + name, payload);
+            };
+        });
+        Object.getOwnPropertyNames(cls.prototype[_1._submodule] || {}).map(function (name) {
+            var vxmodule = cls.prototype[_1._submodule][name];
+            vxmodule.prototype[_1._namespacedPath] = path + name + "/";
+            rtn[name] = vxmodule.CreateProxy($store, vxmodule);
+        });
+        // Cache proxy.
+        prototype[_1._proxy] = rtn;
+    }
+    else {
+        // Use cached proxy.
+        rtn = prototype[cachePath];
+    }
+    return rtn;
+}
+exports.createProxy = createProxy;
 var defaultOptions = {
     namespacedPath: ""
 };

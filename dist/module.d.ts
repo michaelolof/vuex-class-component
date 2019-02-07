@@ -16,18 +16,19 @@ export declare class VuexModule {
         modules: Record<string, any>;
     };
 }
+export declare function createProxy<V extends typeof VuexModule>($store: Store<any>, cls: V, cachePath: symbol): InstanceType<V>;
 export interface VuexModule {
-    [ _state ]: Record<string, any>;
-    [ _mutations ]: Record<string, MutationFunction>;
-    [ _getters ]: Record<string, GetterFunction>;
-    [ _actions_register ]: ActionRegister[];
-    [ _actions ]: Record<string, ActionFunction>;
-    [ _map ]: VuexMap[];
-    [ _proxy ]: Record<string, any>;
-    [ _store ]: Record<string, any>;
-    [ _namespacedPath ]: string;
-    [ _submodule ]: Record<string, typeof VuexModule>;
-    [ _module ]: Record<string, any>;
+    [_state]: Record<string, any>;
+    [_mutations]: Record<string, MutationFunction>;
+    [_getters]: Record<string, GetterFunction>;
+    [_actions_register]: ActionRegister[];
+    [_actions]: Record<string, ActionFunction>;
+    [_map]: VuexMap[];
+    [_proxy]: Record<string, any>;
+    [_store]: Record<string, any>;
+    [_namespacedPath]: string;
+    [_submodule]: Record<string, typeof VuexModule>;
+    [_module]: Record<string, any>;
 }
 export declare function Module(options?: {
     namespacedPath: string;

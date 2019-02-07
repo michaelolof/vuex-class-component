@@ -6,6 +6,7 @@ export declare const _actions_register: unique symbol;
 export declare const _actions: unique symbol;
 export declare const _map: unique symbol;
 export declare const _proxy: unique symbol;
+export declare const _contextProxy: unique symbol;
 export declare const _store: unique symbol;
 export declare const _namespacedPath: unique symbol;
 export declare const _submodule: unique symbol;

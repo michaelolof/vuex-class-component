@@ -57,7 +57,4 @@
     "test/",
     "dist/",
   ],
-  "include": [
-    "test/src/global.d.ts",
-  ]
 }

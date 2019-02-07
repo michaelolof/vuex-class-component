@@ -10,6 +10,7 @@ exports._actions_register = Symbol("actions_register");
 exports._actions = Symbol("actions");
 exports._map = Symbol("map");
 exports._proxy = Symbol("proxy_prototype");
+exports._contextProxy = Symbol("context_proxy");
 exports._store = Symbol("store");
 exports._namespacedPath = Symbol("namespacedPath");
 exports._submodule = Symbol("submodule");
