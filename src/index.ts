@@ -7,6 +7,7 @@ export const _actions_register = Symbol("actions_register");
 export const _actions = Symbol("actions");
 export const _map = Symbol("map");
 export const _proxy = Symbol("proxy_prototype");
+export const _contextProxy = Symbol("context_proxy");
 export const _store = Symbol("store");
 export const _namespacedPath = Symbol("namespacedPath");
 export const _submodule = Symbol("submodule");
