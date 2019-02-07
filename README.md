@@ -10,6 +10,8 @@ A Type Safe Solution for Vuex Modules using ES6 Classes and ES7 Decorators that 
 ## Dependencies
 This module has no external dependencies. 
 
+## Changelog
+  - `v.1.4.0` - async/await now works with actions in mutatate mode. 
 ## Installation
 ```
 $ npm install --save vuex-class-component
@@ -225,9 +227,9 @@ Example:
 ```
 The above code snippet highlights the difference between the two action modes.
 
-Mutated Actions can access state, getters, mutations and other actions with the this keyword just like any normal function would and the library resolves your context fo you. The only limitation is that **you can't use the async/await keyword** or you will get a ReferenceError.\
+Mutated Actions can access state, getters, mutations and other actions with the this keyword just like any normal function would and the library resolves your context fo you. The only limitation is that you can't use the async/await keyword. **(Note: from version 1.4.0. async/await now works in actions)**\
 \
-Raw Actions on the other hand give you all the freedom you want with the ability to use async/await or any features you might need. The limitation for the appoach however is that **you can't and shouldn't use this like in mutated actions**. Instead get back the context object with the getRawActionContext function and use just like your normal vuex module.\
+Raw Actions on the other hand give you all the freedom you want with the ability to use async/await or any features you might need. The limitation for the appoach however is that **you can't and shouldn't use this like in mutated actions**. Instead get back the context object with the getRawActionContext function and use just like your normal vuex module. **(Following the fix to actions in mutate mode, raw actions will be deprecated from version 2.0.0 See Issue https://github.com/michaelolof/vuex-class-component/issues/4)**\
 \
 **Mutated actions** are great for simple chainable promise calls or if async/await is not extremely important to you. If you must use async/await, use **Raw Actions**. Muatated Actions partially sacrifice flexibilty for total type safety. Raw actions partially sacrifice type safety for total flexibility.
 \
