@@ -139,7 +139,8 @@ export function Module(options = defaultOptions) {
 }
 
 function subModuleObjectIsFound(stateValue: any): stateValue is SubModuleObject {
-  return typeof stateValue === "object" && stateValue.type === _submodule
+  if( stateValue === null ) return false;
+  return (typeof stateValue === "object") && (stateValue.type === _submodule);
 }
 
 function handleSubModule(target: typeof VuexModule, stateField: string, stateValue: SubModuleObject) {
