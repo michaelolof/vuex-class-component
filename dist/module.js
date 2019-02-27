@@ -122,7 +122,9 @@ function Module(options) {
 }
 exports.Module = Module;
 function subModuleObjectIsFound(stateValue) {
-    return typeof stateValue === "object" && stateValue.type === _1._submodule;
+    if (stateValue === null)
+        return false;
+    return (typeof stateValue === "object") && (stateValue.type === _1._submodule);
 }
 function handleSubModule(target, stateField, stateValue) {
     if (target.prototype[_1._module] === undefined) {
