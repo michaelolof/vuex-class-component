@@ -46,6 +46,11 @@ function createProxy($store, cls, cachePath) {
     var path = cls.prototype[_1._namespacedPath];
     var prototype = cls.prototype;
     if (prototype[cachePath] === undefined) { // Proxy has not been cached.
+        Object.getOwnPropertyNames(prototype[_1._state] || {}).map(function (name) {
+            Object.defineProperty(rtn, name, {
+                value: prototype[_1._state][name]
+            });
+        });
         Object.getOwnPropertyNames(prototype[_1._getters] || {}).map(function (name) {
             Object.defineProperty(rtn, name, {
                 get: function () { return $store.getters[path + name]; }
