@@ -44,16 +44,10 @@ export function createProxy<V extends typeof VuexModule>($store: Store<any>, cls
   const prototype = cls.prototype as any
 
   if (prototype[ cachePath ] === undefined) { // Proxy has not been cached.
-
-    Object.getOwnPropertyNames(prototype[_state] || {}).map(name => {
-      Object.defineProperty( rtn, name, {
-        value: prototype[ _state ][ name ] 
-      })
-    });
-  
     Object.getOwnPropertyNames(prototype[_getters] || {}).map(name => {
       Object.defineProperty(rtn, name, {
-        get: () => $store.getters[path + name]
+        get: () => $store.getters[path + name],
+        value: prototype[ _state ][ name ]
       })
     });
 
