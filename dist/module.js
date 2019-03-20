@@ -49,7 +49,7 @@ function createProxy($store, cls, cachePath) {
         Object.getOwnPropertyNames(prototype[_1._state] || {}).map(function (name) {
             Object.defineProperty(rtn, name, {
                 value: prototype[_1._state][name],
-                writable: false,
+                writable: true,
             });
         });
         Object.getOwnPropertyNames(prototype[_1._getters] || {}).map(function (name) {

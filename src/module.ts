@@ -48,7 +48,7 @@ export function createProxy<V extends typeof VuexModule>($store: Store<any>, cls
     Object.getOwnPropertyNames(prototype[_state] || {}).map(name => {
       Object.defineProperty( rtn, name, {
         value: prototype[ _state ][ name ],
-        writable: false,
+        writable: true,
       })
     });
   
