@@ -1,6 +1,6 @@
 {
   "name": "vuex-class-component",
-  "version": "1.4.3",
+  "version": "1.4.4",
   "description": "\"A Type Safe Vuex Module or Store Using ES6 Classes and ES7 Decorators written in TypeScript.\"",
   "main": "dist/index.js",
   "directories": {
