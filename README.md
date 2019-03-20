@@ -24,30 +24,31 @@ $ npm install --save vuex-class-component
 ## How to use
 Consider this example.
 ```js
-  const user = {
-    namespace: true,
-    state: {
-      firstname: "Michael",
-      lastname: "Olofinjana",
-      specialty: "JavaScript",
-      occupation: "Developer",
-    },
-    mutations: {
-      changeName(state, payload) {
-        state.firstname = payload.firstname; 
-        state.lastname = payload.lastname;
-      } 
-    },
-    actions: {
-      doSomethingAsync(context) { ... }
-      doAnotherAsyncStuff(context, payload) { ... }
-    },
-    getters: {
-      fullname: (state) => state.firstname + " " + state.lastname,
-      occupation: (state) => state.occupation,
-      specialty: (state) => state.specialty,
-    }
+// user.vuex.ts
+const user = {
+  namespace: true,
+  state: {
+    firstname: "Michael",
+    lastname: "Olofinjana",
+    specialty: "JavaScript",
+    occupation: "Developer",
+  },
+  mutations: {
+    changeName(state, payload) {
+      state.firstname = payload.firstname; 
+      state.lastname = payload.lastname;
+    } 
+  },
+  actions: {
+    doSomethingAsync(context) { ... }
+    doAnotherAsyncStuff(context, payload) { ... }
+  },
+  getters: {
+    fullname: (state) => state.firstname + " " + state.lastname,
+    occupation: (state) => state.occupation,
+    specialty: (state) => state.specialty,
   }
+}
 ```
 This is how we previously wrote Vuex Modules. Some of the obvious difficulties with this approach are:
 
@@ -57,6 +58,7 @@ This is how we previously wrote Vuex Modules. Some of the obvious difficulties w
 
 A better approach to solving this problem would be to use a VuexModule class as follows.
 ```ts
+// user.vuex.ts
 import { VuexModule, mutation, action, getter, Module } from "vuex-class-component";
 
 // TypeScript Only. (JavaScript devs don't need this)
@@ -70,21 +72,23 @@ export class UserStore extends VuexModule {
   
   private firstname = "Michael";
   private lastname = "Olofinjana";
-  @getter specialty = "JavaScript";
-  @getter occupation = "Developer";
+  @getter specialty = "JavaScript"; // The @getter decorator automatically exposes a defined state as a getter.
+  @getter occupation = "Developer"; 
 
-  @mutation 
-  changeName({firstname, lastname}:Name) {
+  @mutation changeName({firstname, lastname}:Name) {
     this.firstname = firstname;
     this.lastname = lastname;
   }
 
-  @action() 
-  doSomethingAsync() { ... }
+  @action async doSomethingAsync() { return 20 }
 
-  @action() 
-  doAnotherAsyncStuff(payload) { ... }
+  @action async doAnotherAsyncStuff(payload) { 
+    const number = await this.doSomethingAsyc();
+    this.changeName({ firstname: "John", lastname: "Doe" });
+    return payload + this.fullName;
+  }
 
+  // Explicitly define a vuex getter using class getters.
   get fullName() {
     return this.firstname + " " + this.lastname;
   }
@@ -92,19 +96,24 @@ export class UserStore extends VuexModule {
 ```
 This is a significant improvement over our initial method. First we get type safety out of the box since we're using classes without doing much work. Also note that **occupation** and **specialty** don't need to be redefined as getters any longer. Just import the getter decorator, use it on an already defined state and it automatically becomes a getter. This is useful when you have a long list of initialized state you also want to make available as getters. Which is also why state that are not getters must be **private**\
 \
-We can then extract the actual vuex object:
+This module can now be used in our Vuex store by extracting it like so.
 ```ts
-export const user = UserStore.ExtractVuexModule( UserStore );
+// store.vuex.ts
+export const store = new Vuex.Store({
+  modules: {
+  /** 
+   * PLEASE NOTE
+   * ---------------------
+   * If you're using namespaces in your modules, then the modules object field 
+   * must be the same value as your "namespacedPath" value.
+   * In this case, the "user" field must be the same as the namespacedPath "user/"
+   * 
+   * If you're not using namespaces, this doesn't matter.
+   */
+   user: UserStore.ExtractVuexModule( UserStore ),
+  }
+})
 ```
-Then simply place in your Vuex Store.
-```ts
-  export const store = new Vuex.Store({
-    modules: {
-      user,
-    }
-  })
-```
-
 ## Ok. So What About Vue Components?
 Ensuring type safety in Vuex Modules is just one half of the problem solved. We still need to use them in our Vue Components.\
 \
@@ -134,15 +143,14 @@ All is looking good. we've ensured type safety in our Vue Components by creating
 The only problem here is, in reality we might have one component making request to multiple vuex modules. Imagine a vue component talking to 5 vuex modules. Importing and creating proxies for each module in all our components might become repetitive and frankly unecessary.
 
 ### Vuex Manager
-A vuex manager is simply an exportable object that houses all our proxies. We can easily create a vuex manager in our original vuex store file. (See Example)
+A vuex manager is simply an exportable object that houses all your proxies. We can easily create a vuex manager in our original vuex store file. (See Example)
 ```ts
-  /** in store.ts/store.js */
+  // store.vuex.ts
   export const store = new Vuex.Store({
     modules: {
-      user,
-      pages,
-      dashboard,
-      story,
+      user: UserStore.ExtractVuexModule( UserStore ),
+      pages: PagesStore.ExtractVuexModule( PagesStore ),
+      story: StoryStore.ExtractVuexModule( StoryStore ),
     }
   })
 
@@ -165,8 +173,7 @@ Let say we had a sub module called `CarStore`
   class CarStore extends VuexModule {
     @getter noOfWheels = 4;
 
-    @action()
-    drive() {
+    @action drive() {
       console.log("driving on", this.noOfWheels, "wheels" )
     }
   }
@@ -184,55 +191,52 @@ Now you can easily use in your Vue Components like:
 ```
 
 ## A note on Vuex Actions?
-Vuex actions are particularly tricky to get working due to their **context** nature. But writing and using actions with type safety is not impossible.\
-\
-To ensure type safety and still maintain flexibility so you are not limited by the library, actions in vuex-class-components come in two modes "mutate" or "raw". By default the mode is set to "mutate"\
-\
-Example:
+Vuex Actions comes in two modes. A `mutate` mode and a `raw` mode. Both can be very useful.\
+For most of your use cases the `mutate` mode is all you'll need. The `raw` mode can be especially useful when you need access to `rootState` and `rootGetters`.\
+This is how we use them
 ```ts
-  import { getRawActionContext } from "vuex-class-component";
+import { getRawActionContext } from "vuex-class-component";
 
-  @Module()
-  class MyModule extends VuexModule {
+@Module()
+class MyModule extends VuexModule {
     
-    private name = "John Doe";
-    @getter occupation = "Engineer"
-    
-    @mutation 
-    changeOccupation(occupation) {
-      this.occupation = occupation;
-    }
-
-    @action() 
-    dummyAction() { ... }
-
-    @action({ mode:"mutate"})
-    mutatedAction(payload) {
-      this.name = payload.firstname + " " + payload.lastname;
-      this.changeOccupation("Developer");
-      this.occupation /** Developer */
-      return this.dummyAction().then( val => val )
-    }
-
-    @action({ mode: "raw" })
-    async rawAction(payload) {
-      const context = getRawActionContext( this );
-      context.state.name = payload.firstname + " " + payload.lastname;
-      context.commit("changeOccupation", "Developer");
-      context.getters.occupation /** Developer */
-      const dummyVal = await context.dispatch("dummyAction");
-      return dummyVal;
-    }
+  private name = "John Doe";
+  @getter occupation = "Engineer"
+   
+  @mutation 
+  changeOccupation(occupation) {
+    this.occupation = occupation;
   }
+
+  // This action is in mutate mode by default hence 
+  // the brackets and options are not necessary.
+  @action dummyAction() { ... }
+
+  @action({ mode:"mutate"})
+  async mutatedAction(payload) {
+    this.name = payload.firstname + " " + payload.lastname;
+    this.changeOccupation("Developer");
+    this.occupation /** Developer */
+    const dummyVal = await this.dummyAction();
+    return dummyVal;
+  }
+
+  @action({ mode: "raw" })
+  async rawAction(payload) {
+    const context = getRawActionContext( this );
+    context.state.name = payload.firstname + " " + payload.lastname;
+    context.commit("changeOccupation", "Developer");
+    context.getters.occupation /** Developer */
+    const dummyVal = await context.dispatch("dummyAction");
+    return dummyVal;
+  }
+}
 ```
 The above code snippet highlights the difference between the two action modes.
 
-Mutated Actions can access state, getters, mutations and other actions with the this keyword just like any normal function would and the library resolves your context fo you. The only limitation is that you can't use the async/await keyword. **(Note: from version 1.4.0. async/await now works in actions)**\
-\
-Raw Actions on the other hand give you all the freedom you want with the ability to use async/await or any features you might need. The limitation for the appoach however is that **you can't and shouldn't use this like in mutated actions**. Instead get back the context object with the getRawActionContext function and use just like your normal vuex module. **(Following the fix to actions in mutate mode, raw actions will be deprecated from version 2.0.0 See Issue https://github.com/michaelolof/vuex-class-component/issues/4)**\
-\
-**Mutated actions** are great for simple chainable promise calls or if async/await is not extremely important to you. If you must use async/await, use **Raw Actions**. Muatated Actions partially sacrifice flexibilty for total type safety. Raw actions partially sacrifice type safety for total flexibility.
-\
-\
+Mutated Actions can access state, getters, mutations and other actions with the `this` keyword just like any normal function.
+
+Raw Actions on the other hand gives you access to `rootState` and `rootGetters`. The only limitation to this appoach however is that **you can't and shouldn't use the `this` keyword.** Instead you should get back the context object with the `getRawActionContext` function and then treat the function body like a regular vuex action. 
+
 All actions MUST return a promise.\
 All actions proxies are totally type safe and can still be used normally in Vue components whether mutatated or raw.
