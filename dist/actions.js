@@ -2,11 +2,20 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 var module_1 = require("./module");
 var _1 = require(".");
-function action(options) {
-    if (options === void 0) { options = { mode: "mutate" }; }
-    switch (options.mode) {
-        case "mutate": return mutateAction;
+function action() {
+    var params = [];
+    for (var _i = 0; _i < arguments.length; _i++) {
+        params[_i] = arguments[_i];
+    }
+    var firstParam = params[0];
+    if (firstParam === undefined)
+        return mutateAction;
+    if (firstParam instanceof module_1.VuexModule)
+        return mutateAction(firstParam, params[1], params[2]);
+    switch (firstParam.mode) {
         case "raw": return rawAction;
+        case "mutate": return mutateAction;
+        default: return mutateAction;
     }
 }
 exports.action = action;
