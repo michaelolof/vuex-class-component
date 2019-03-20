@@ -10,13 +10,20 @@ export interface ActionRegister {
 }
 
 export interface ActionOption {
-  mode:"mutate"|"raw";
+  mode?:"mutate"|"raw";
 }
 
-export function action(options:ActionOption = { mode:"mutate"}) {
-  switch( options.mode ) {
-    case "mutate": return mutateAction;
+export function action(options?:ActionOption):any
+export function action(target:any, key:string, descriptor:ActionDescriptor):any
+export function action(...params:any[]) {
+  const firstParam = params[0] as VuexModule | ActionOption | undefined;
+  
+  if( firstParam === undefined ) return mutateAction;
+  if( firstParam instanceof VuexModule ) return mutateAction( firstParam, params[ 1 ], params[ 2 ] );
+  switch( firstParam.mode ) {
     case "raw": return rawAction;
+    case "mutate": return mutateAction;
+    default: return mutateAction;
   }
 }
 
