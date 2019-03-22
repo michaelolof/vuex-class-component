@@ -44,15 +44,18 @@ export function createProxy($store, cls, cachePath) {
     var path = cls.prototype[_namespacedPath];
     var prototype = cls.prototype;
     if (prototype[cachePath] === undefined) { // Proxy has not been cached.
-        Object.getOwnPropertyNames(prototype[_state] || {}).map(function (name) {
-            Object.defineProperty(rtn, name, {
-                value: prototype[_state][name],
-                writable: true,
-            });
-        });
         Object.getOwnPropertyNames(prototype[_getters] || {}).map(function (name) {
             Object.defineProperty(rtn, name, {
                 get: function () { return $store.getters[path + name]; }
+            });
+        });
+        Object.getOwnPropertyNames(prototype[_state] || {}).map(function (name) {
+            // If state has already been defined as a getter, do not redefine.
+            if (rtn[name])
+                return;
+            Object.defineProperty(rtn, name, {
+                value: prototype[_state][name],
+                writable: true,
             });
         });
         Object.getOwnPropertyNames(prototype[_mutations] || {}).map(function (name) {
