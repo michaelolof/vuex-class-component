@@ -12,6 +12,7 @@ This module has no external dependencies.
 
 ## Changelog
   - `v.1.4.0` - async/await now works with actions in mutatate mode. 
+
 ## Installation
 ```
 $ npm install --save vuex-class-component
@@ -20,6 +21,19 @@ $ npm install --save vuex-class-component
 ## Examples
   - Vuex Class Component Simple: https://github.com/michaelolof/vuex-class-component-simple
   - Vuex Class Component Test: https://github.com/michaelolof/vuex-class-component-test
+
+## JavaScript Support
+From version `1.5.0` JavaScript is now supported fully.
+To use vuex-class-component in your JavaScript files, ensure your babel.config.js file has the following plugins:
+```js
+module.exports = {
+  ...
+  plugins: [
+    ["@babel/plugin-proposal-decorators", { "legacy": true }],
+    ["@babel/plugin-proposal-class-properties", { "loose" : true }]
+  ]
+}
+```
 
 ## How to use
 Consider this example.
