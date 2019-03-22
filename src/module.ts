@@ -1,5 +1,5 @@
 import { getMutatedActions as getProxiedActions, ActionRegister } from "./actions";
-import { _state, _mutations, _getters, _proxy, _map, _store, _namespacedPath, _actions_register, _actions, MutationFunction, GetterFunction, ActionFunction, VuexMap, _submodule, SubModuleObject, _module } from ".";
+import { _state, _mutations, _getters, _proxy, _map, _store, _namespacedPath, _actions_register, _actions, MutationFunction, GetterFunction, ActionFunction, VuexMap, _submodule, SubModuleObject, _module } from "./symbols";
 import { Store } from "vuex";
 
 export type VuexClassConstructor<T> = new () => T

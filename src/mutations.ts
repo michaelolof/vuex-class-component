@@ -1,4 +1,4 @@
-import { _mutations } from ".";
+import { _mutations } from "./symbols";
 
 export type MutationDescriptor = TypedPropertyDescriptor<(payload?:any) => void>
 

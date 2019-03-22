@@ -1,4 +1,4 @@
-import { _getters } from ".";
+import { _getters } from "./symbols";
 
 const getterBuilder = (field:any) => new Function("state", `return state.${field}`);
 

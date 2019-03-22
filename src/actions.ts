@@ -1,5 +1,5 @@
 import { VuexModule, createProxy } from "./module";
-import { _actions_register, _mutations, _state, _getters, _actions, _namespacedPath, _contextProxy } from ".";
+import { _actions_register, _mutations, _state, _getters, _actions, _namespacedPath, _contextProxy } from "./symbols";
 import { ActionContext } from 'vuex';
 
 export type ActionDescriptor = TypedPropertyDescriptor<(payload?:any) => Promise<any>>
