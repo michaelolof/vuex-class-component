@@ -1,5 +1,6 @@
 src/
-test/
+test-ts/
+test-js/
 tsconfig.json
 node_modules
 .vscode/
