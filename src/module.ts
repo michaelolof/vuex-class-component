@@ -1,5 +1,6 @@
 import { getMutatedActions as getProxiedActions, ActionRegister } from "./actions";
 import { _state, _mutations, _getters, _proxy, _map, _store, _namespacedPath, _actions_register, _actions, MutationFunction, GetterFunction, ActionFunction, VuexMap, _submodule, SubModuleObject, _module } from "./symbols";
+//@ts-ignore
 import { Store } from "vuex";
 
 export type VuexClassConstructor<T> = new () => T
@@ -44,19 +45,22 @@ export function createProxy<V extends typeof VuexModule>($store: Store<any>, cls
   const prototype = cls.prototype as any
 
   if (prototype[ cachePath ] === undefined) { // Proxy has not been cached.
-
-    Object.getOwnPropertyNames(prototype[_state] || {}).map(name => {
-      Object.defineProperty( rtn, name, {
-        value: prototype[ _state ][ name ],
-        writable: true,
-      })
-    });
   
     Object.getOwnPropertyNames(prototype[_getters] || {}).map(name => {
       Object.defineProperty(rtn, name, {
         get: () => $store.getters[path + name]
       })
     });
+
+    Object.getOwnPropertyNames(prototype[_state] || {}).map(name => {
+      // If state has already been defined as a getter, do not redefine.
+      if( rtn[ name ] ) return;
+      Object.defineProperty( rtn, name, {
+        value: prototype[ _state ][ name ],
+        writable: true,
+      })
+    });
+
 
     Object.getOwnPropertyNames(prototype[_mutations] || {}).map(name => {
       rtn[name] = function (payload?: any) {
