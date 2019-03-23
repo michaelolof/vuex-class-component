@@ -39,13 +39,22 @@ export class VuexModule {
   }
 }
 
+function getValueByPath (object: any, path: string) : any {
+  const pathArray = path.split('/')
+  let value : any = object
+  for (const part of pathArray) {
+    value = value[part]
+  }
+  return value
+}
+
 export function createProxy<V extends typeof VuexModule>($store: Store<any>, cls: V, cachePath: symbol) {
   let rtn: Record<any, any> = {}
   const path = cls.prototype[_namespacedPath];
   const prototype = cls.prototype as any
 
   if (prototype[ cachePath ] === undefined) { // Proxy has not been cached.
-  
+
     Object.getOwnPropertyNames(prototype[_getters] || {}).map(name => {
       Object.defineProperty(rtn, name, {
         get: () => $store.getters[path + name]
@@ -54,11 +63,17 @@ export function createProxy<V extends typeof VuexModule>($store: Store<any>, cls
 
     Object.getOwnPropertyNames(prototype[_state] || {}).map(name => {
       // If state has already been defined as a getter, do not redefine.
-      if( rtn[ name ] ) return;
-      Object.defineProperty( rtn, name, {
-        value: prototype[ _state ][ name ],
-        writable: true,
-      })
+      if(rtn.hasOwnProperty(name)) return;
+      if (prototype[_submodule] && prototype[_submodule].hasOwnProperty(name)) {
+        Object.defineProperty( rtn, name, {
+          value: prototype[ _state ][ name ],
+          writable: true,
+        })
+      } else {
+        Object.defineProperty( rtn, name, {
+          get: () => getValueByPath($store.state, path + name)
+        })
+      }
     });
 
 
