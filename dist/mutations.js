@@ -1,5 +1,6 @@
 import { _mutations } from "./symbols";
 export function mutation(target, key, descriptor) {
+    var _a;
     var func = descriptor.value || new Function();
     var newFunc = function (state, payload) {
         func.call(state, payload);
@@ -13,6 +14,5 @@ export function mutation(target, key, descriptor) {
     else {
         target[_mutations][key] = newFunc;
     }
-    var _a;
 }
 //# sourceMappingURL=mutations.js.map
