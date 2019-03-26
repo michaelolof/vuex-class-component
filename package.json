@@ -7,7 +7,8 @@
     "test": "test"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest",
+    "build": "tsc"
   },
   "keywords": [
     "Vuex with Type safety",
@@ -22,10 +23,15 @@
   "author": "michaelolof",
   "license": "ISC",
   "devDependencies": {
+    "@types/jest": "^24.0.11",
+    "@vue/test-utils": "^1.0.0-beta.29",
+    "jest": "^24.5.0",
+    "ts-jest": "^24.0.0",
     "ts-loader": "^5.3.1",
     "typescript": "^3.2.2",
-    "vue": "^2.5.21",
-    "vuex": "^3.0.1",
+    "vue": "^2.6.10",
+    "vue-template-compiler": "^2.6.10",
+    "vuex": "^3.1.0",
     "webpack": "^4.28.0"
   },
   "dependencies": {}

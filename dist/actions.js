@@ -20,6 +20,7 @@ export function getRawActionContext(thisArg) {
     return thisArg;
 }
 function rawAction(target, key, descriptor) {
+    var _a;
     var func = descriptor.value || new Function();
     var vuexFunc = function (context, payload) {
         return func.call(context, payload);
@@ -33,7 +34,6 @@ function rawAction(target, key, descriptor) {
     else {
         target[_actions][key] = vuexFunc;
     }
-    var _a;
 }
 function mutateAction(target, key, descriptor) {
     if (target[_actions_register] === undefined) {
