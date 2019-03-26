@@ -36,7 +36,7 @@ class UserStore extends VuexModule {
 
 	@action async doSomethingAsync() { return 20 }
 
-	@action async doAnotherAsyncStuff(payload) {
+	@action async doAnotherAsyncStuff(payload:any) {
 		const number = await this.doSomethingAsync()
 		this.changeName({ firstname: 'John', lastname: 'Doe' })
 		return payload + this.fullName
@@ -49,8 +49,8 @@ class UserStore extends VuexModule {
 }
 
 describe('CreateProxy', () => {
-	let store
-	let localVue
+	let store;
+	let localVue;
 	beforeEach(() => {
 		localVue = createLocalVue()
 		localVue.use(Vuex)
