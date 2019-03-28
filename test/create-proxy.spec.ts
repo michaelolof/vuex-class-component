@@ -1,11 +1,12 @@
-import { Module, VuexModule } from '../src/module'
-import { getter } from '../src/getters'
-import { mutation } from '../src/mutations'
-import { action } from '../src/actions'
 // @ts-ignore
 import Vuex, {Store} from 'vuex'
 // @ts-ignore
 import { createLocalVue } from '@vue/test-utils'
+import { Module, VuexModule } from '../src/module'
+import { getter } from '../src/getters'
+import { mutation } from '../src/mutations'
+import { action } from '../src/actions'
+
 
 interface Name {
 	firstname:string
@@ -20,6 +21,8 @@ class UserSettings extends VuexModule{
 		this.cookieConsent = consent
 	}
 }
+
+
 @Module({ namespacedPath: 'user/' })
 class UserStore extends VuexModule {
 	settings = UserSettings.CreateSubModule(UserSettings)

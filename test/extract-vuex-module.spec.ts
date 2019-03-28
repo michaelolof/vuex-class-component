@@ -21,7 +21,7 @@ class UserStore extends VuexModule {
 
 	private firstname = 'Michael'
 	private lastname = 'Olofinjana'
-	@getter specialty = 'JavaScript' // The @getter decorator automatically exposes a defined state as a getter.
+	@getter speciality = 'JavaScript' // The @getter decorator automatically exposes a defined state as a getter.
 	@getter occupation = 'Developer'
 
 	@mutation changeName({firstname, lastname}:Name) {
@@ -50,16 +50,28 @@ describe('ExtractVuexModule', () => {
 		expect(state).toEqual({
 				firstname: 'Michael',
 				lastname: 'Olofinjana',
-				specialty: 'JavaScript',
+				speciality: 'JavaScript',
 				occupation: 'Developer'
 			})
 		expect(state).not.toHaveProperty('settings')
 	})
 
+	it('should extract all properties as state in a function for target => nuxt', () => {
+		const { state } = UserStore.ExtractVuexModule( UserStore, "nuxt" );
+		expect( typeof state ).toBe( "function" );
+		expect( state() ).toEqual({
+			firstname: "Michael",
+			lastname: "Olofinjana",
+			speciality: "JavaScript",
+			occupation: "Developer"
+		});
+		expect( state ).not.toHaveProperty( "settings" );
+	})
+
 	it('should extract all getters', () => {
 		const { getters } = UserStore.ExtractVuexModule(UserStore)
 
-		expect(Object.keys(getters)).toEqual(['specialty', 'occupation', 'fullName'])
+		expect(Object.keys(getters)).toEqual(['speciality', 'occupation', 'fullName'])
 	})
 
 	it('should extract all actions', () => {
@@ -85,3 +97,4 @@ describe('ExtractVuexModule', () => {
 		expect(Object.keys(modules)).toEqual(['settings'])
 	})
 })
+

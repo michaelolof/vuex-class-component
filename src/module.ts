@@ -5,6 +5,7 @@ import { Store } from "vuex";
 
 export type VuexClassConstructor<T> = new () => T
 
+export type VuexModuleTarget = "core" | "nuxt";
 
 export class VuexModule {
 
@@ -19,24 +20,33 @@ export class VuexModule {
     return createProxy( $store, cls, _proxy )
   }
 
-  static ExtractVuexModule(cls: typeof VuexModule) {
-    const proxiedActions = getProxiedActions(cls);
-    const rawActions = cls.prototype[_actions] as Record<any, any>;
-    const actions = { ...proxiedActions, ...rawActions }
-    //Update prototype with mutated actions.
-    cls.prototype[_actions] = actions;
-
-    const mod = {
+  static ExtractVuexModule(cls :typeof VuexModule, target :VuexModuleTarget = "core") {
+    return  {
       namespaced: cls.prototype[_namespacedPath].length > 0 ? true : false,
-      state: cls.prototype[_state],
+      state: extractState( cls, target ),
       mutations: cls.prototype[_mutations],
-      actions,
+      actions: extractActions( cls ),
       getters: cls.prototype[_getters],
       modules: cls.prototype[_module],
     };
-
-    return mod;
   }
+}
+
+function extractState( cls :typeof VuexModule, target :VuexModuleTarget = "core" ):any {
+  switch( target ) {
+    case "core": return cls.prototype[ _state ];
+    case "nuxt": return () => cls.prototype[ _state ];
+    default: return cls.prototype [ _state ]; 
+  }
+}
+
+function extractActions( cls :typeof VuexModule ) {
+  const proxiedActions = getProxiedActions(cls);
+  const rawActions = cls.prototype[_actions] as Record<any, any>;
+  const actions = { ...proxiedActions, ...rawActions }
+  //Update prototype with mutated actions.
+  cls.prototype[ _actions ] = actions;
+  return actions;
 }
 
 function getValueByPath (object: any, path: string) : any {

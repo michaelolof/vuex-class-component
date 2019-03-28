@@ -2,12 +2,13 @@ import { ActionRegister } from "./actions";
 import { _state, _mutations, _getters, _proxy, _map, _store, _namespacedPath, _actions_register, _actions, MutationFunction, GetterFunction, ActionFunction, VuexMap, _submodule, _module } from "./symbols";
 import { Store } from "vuex";
 export declare type VuexClassConstructor<T> = new () => T;
+export declare type VuexModuleTarget = "core" | "nuxt";
 export declare class VuexModule {
     static CreateSubModule<V extends typeof VuexModule>(SubModule: V): InstanceType<V>;
     static CreateProxy<V extends typeof VuexModule>($store: Store<any>, cls: V): InstanceType<V>;
-    static ExtractVuexModule(cls: typeof VuexModule): {
+    static ExtractVuexModule(cls: typeof VuexModule, target?: VuexModuleTarget): {
         namespaced: boolean;
-        state: Record<string, any>;
+        state: any;
         mutations: Record<string, MutationFunction>;
         actions: {
             [x: string]: any;

@@ -23,25 +23,36 @@ var VuexModule = /** @class */ (function () {
     VuexModule.CreateProxy = function ($store, cls) {
         return createProxy($store, cls, _proxy);
     };
-    VuexModule.ExtractVuexModule = function (cls) {
-        var proxiedActions = getProxiedActions(cls);
-        var rawActions = cls.prototype[_actions];
-        var actions = __assign({}, proxiedActions, rawActions);
-        //Update prototype with mutated actions.
-        cls.prototype[_actions] = actions;
-        var mod = {
+    VuexModule.ExtractVuexModule = function (cls, target) {
+        if (target === void 0) { target = "core"; }
+        return {
             namespaced: cls.prototype[_namespacedPath].length > 0 ? true : false,
-            state: cls.prototype[_state],
+            state: extractState(cls, target),
             mutations: cls.prototype[_mutations],
-            actions: actions,
+            actions: extractActions(cls),
             getters: cls.prototype[_getters],
             modules: cls.prototype[_module],
         };
-        return mod;
     };
     return VuexModule;
 }());
 export { VuexModule };
+function extractState(cls, target) {
+    if (target === void 0) { target = "core"; }
+    switch (target) {
+        case "core": return cls.prototype[_state];
+        case "nuxt": return function () { return cls.prototype[_state]; };
+        default: return cls.prototype[_state];
+    }
+}
+function extractActions(cls) {
+    var proxiedActions = getProxiedActions(cls);
+    var rawActions = cls.prototype[_actions];
+    var actions = __assign({}, proxiedActions, rawActions);
+    //Update prototype with mutated actions.
+    cls.prototype[_actions] = actions;
+    return actions;
+}
 function getValueByPath(object, path) {
     var pathArray = path.split('/');
     var value = object;
