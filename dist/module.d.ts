@@ -16,7 +16,7 @@ export declare class VuexModule {
         modules: Record<string, any>;
     };
 }
-export declare function createProxy<V extends typeof VuexModule>($store: Store<any>, cls: V, cachePath: symbol): InstanceType<V>;
+export declare function createProxy<V extends typeof VuexModule>($store: Store<any>, cls: V, cachePath: string): InstanceType<V>;
 export interface VuexModule {
     [_state]: Record<string, any>;
     [_mutations]: Record<string, MutationFunction>;

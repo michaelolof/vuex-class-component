@@ -48,7 +48,7 @@ function getValueByPath (object: any, path: string) : any {
   return value
 }
 
-export function createProxy<V extends typeof VuexModule>($store: Store<any>, cls: V, cachePath: symbol) {
+export function createProxy<V extends typeof VuexModule>($store: Store<any>, cls: V, cachePath:string) {
   let rtn: Record<any, any> = {}
   const path = cls.prototype[_namespacedPath];
   const prototype = cls.prototype as any

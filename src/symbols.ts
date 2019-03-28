@@ -1,18 +1,17 @@
 import { VuexModule } from "./module";
 
-
-export const _state = Symbol("state");
-export const _mutations = Symbol("mutations");
-export const _getters = Symbol("getters");
-export const _actions_register = Symbol("actions_register");
-export const _actions = Symbol("actions");
-export const _map = Symbol("map");
-export const _proxy = Symbol("proxy_prototype");
-export const _contextProxy = Symbol("context_proxy");
-export const _store = Symbol("store");
-export const _namespacedPath = Symbol("namespacedPath");
-export const _submodule = Symbol("submodule");
-export const _module = Symbol("module");
+export const _state = "__state__";
+export const _mutations = "__mutations__";
+export const _getters = "__getters__";
+export const _actions_register = "__actions_register__";
+export const _actions = "__actions__";
+export const _map = "__map__";
+export const _proxy = "__proxy_prototype__";
+export const _contextProxy = "__context_proxy__";
+export const _store = "__store__";
+export const _namespacedPath = "__namespacedPath__";
+export const _submodule = "__submodule__";
+export const _module = "__module__";
 
 export type MutationFunction = (state:any, payload:any) => void;
 export type ActionFunction = (context:any, payload:any) => Promise<any>;
