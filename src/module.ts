@@ -58,62 +58,64 @@ function getValueByPath (object: any, path: string) : any {
   return value
 }
 
-export function createProxy<V extends typeof VuexModule>($store: Store<any>, cls: V, cachePath:string) {
+export function createProxy<V extends typeof VuexModule>($store :Store<any>, cls :V, cachePath :string) {
   let rtn: Record<any, any> = {}
   const path = cls.prototype[_namespacedPath];
   const prototype = cls.prototype as any
 
-  if (prototype[ cachePath ] === undefined) { // Proxy has not been cached.
+  if ( prototype[ cachePath ] === undefined ) { // Proxy has not been cached.
 
-    Object.getOwnPropertyNames(prototype[_getters] || {}).map(name => {
+    Object.getOwnPropertyNames( prototype[ _getters ] || {} ).map( name => {
       Object.defineProperty(rtn, name, {
         get: () => $store.getters[path + name]
       })
     });
 
-    Object.getOwnPropertyNames(prototype[_state] || {}).map(name => {
+    Object.getOwnPropertyNames( prototype[ _state ] || {} ).map( name => {
       // If state has already been defined as a getter, do not redefine.
-      if(rtn.hasOwnProperty(name)) return;
-      if (prototype[_submodule] && prototype[_submodule].hasOwnProperty(name)) {
+      if( rtn.hasOwnProperty( name ) ) return;
+      
+      if ( prototype[ _submodule ] && prototype[ _submodule ].hasOwnProperty( name ) ) {
         Object.defineProperty( rtn, name, {
           value: prototype[ _state ][ name ],
           writable: true,
         })
-      } else {
+      } 
+      else {
         Object.defineProperty( rtn, name, {
-          get: () => getValueByPath($store.state, path + name)
+          get: () => getValueByPath( $store.state, path + name )
         })
       }
+
     });
 
-
-    Object.getOwnPropertyNames(prototype[_mutations] || {}).map(name => {
-      rtn[name] = function (payload?: any) {
-        $store.commit(path + name, payload);
+    Object.getOwnPropertyNames( prototype[ _mutations ] || {} ).map( name => {
+      rtn[ name ] = function( payload?: any ) {
+        $store.commit( path + name, payload );
       }
     });
 
-    Object.getOwnPropertyNames(prototype[_actions] || {}).map(name => {
-      rtn[name] = function (payload?: any) {
-        return $store.dispatch(path + name, payload);
+    Object.getOwnPropertyNames( prototype[ _actions ] || {} ).map( name => {
+      rtn[ name ] = function ( payload?: any ) {
+        return $store.dispatch(path + name, payload );
       }
     });
 
-    Object.getOwnPropertyNames(cls.prototype[_submodule] || {}).map(name => {
-      const vxmodule = cls.prototype[_submodule][name];
-      vxmodule.prototype[_namespacedPath] = path + name + "/";
-      rtn[name] = vxmodule.CreateProxy($store, vxmodule);
+    Object.getOwnPropertyNames( prototype[ _submodule ] || {} ).map( name => {
+      const vxmodule = cls.prototype[ _submodule ][ name ];
+      vxmodule.prototype[ _namespacedPath ] = path + name + "/";
+      rtn[ name ] = vxmodule.CreateProxy( $store, vxmodule );
     })
 
     // Cache proxy.
-    prototype[_proxy] = rtn;
+    prototype[ _proxy ] = rtn;
   }
   else {
     // Use cached proxy.
     rtn = prototype[ cachePath ];
   }
+  
   return rtn as InstanceType<V>;
-
 }
 
 export interface VuexModule {
@@ -131,38 +133,34 @@ export interface VuexModule {
 }
 
 
-const defaultOptions = {
-  namespacedPath: "" as string
-}
-export function Module(options = defaultOptions) {
+export function Module({ namespacedPath = "" }) {
 
-  return function (target: typeof VuexModule): void {
+  return function( target :typeof VuexModule ) :void {
     const targetInstance = new target();
 
-    const states = Object.getOwnPropertyNames(targetInstance);
+    const states = Object.getOwnPropertyNames( targetInstance );
     const stateObj: Record<string, any> = {}
-    if (target.prototype[_map] === undefined) target.prototype[_map] = [];
+    if( target.prototype[ _map ] === undefined ) target.prototype[ _map ] = [];
 
-    for (let stateField of states) {
-      // @ts-ignore
-      const stateValue = targetInstance[stateField];
-      if (stateValue === undefined) continue;
+    for( let stateField of states ) {
+      const stateValue = targetInstance[ stateField ];
+      if ( stateValue === undefined ) continue;
 
-      if (subModuleObjectIsFound(stateValue)) {
-        handleSubModule(target, stateField, stateValue)
+      if ( subModuleObjectIsFound( stateValue )) {
+        handleSubModule( target, stateField, stateValue )
         continue;
       }
-      stateObj[stateField] = stateValue;
-      target.prototype[_map].push({ value: stateField, type: "state" });
+      stateObj[ stateField ] = stateValue;
+      target.prototype[ _map ].push({ value: stateField, type: "state" });
     }
 
-    target.prototype[_state] = stateObj;
+    target.prototype[ _state ] = stateObj;
 
-    const fields = Object.getOwnPropertyDescriptors(target.prototype);
-    if (target.prototype[_getters] === undefined) target.prototype[_getters] = {}
+    const fields = Object.getOwnPropertyDescriptors( target.prototype );
+    if ( target.prototype[ _getters ] === undefined ) target.prototype[ _getters ] = {}
     for (let field in fields) {
-      const getterField = fields[field].get;
-      if (getterField) {
+      const getterField = fields[ field ].get;
+      if ( getterField ) {
         const func = function (state: any) {
           return getterField.call(state);
         }
@@ -170,7 +168,7 @@ export function Module(options = defaultOptions) {
       }
     }
 
-    if (options) target.prototype[_namespacedPath] = options.namespacedPath;
+    if ( namespacedPath.length > 0 ) target.prototype[ _namespacedPath ] = namespacedPath;
 
   }
 }

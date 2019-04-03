@@ -1,6 +1,8 @@
-import { VuexModule, createProxy } from "./module";
-import { _actions_register, _actions, _namespacedPath, _contextProxy } from "./symbols";
-export function action() {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var module_1 = require("./module");
+var symbols_1 = require("./symbols");
+function action() {
     var params = [];
     for (var _i = 0; _i < arguments.length; _i++) {
         params[_i] = arguments[_i];
@@ -8,7 +10,7 @@ export function action() {
     var firstParam = params[0];
     if (firstParam === undefined)
         return mutateAction;
-    if (firstParam instanceof VuexModule)
+    if (firstParam instanceof module_1.VuexModule)
         return mutateAction(firstParam, params[1], params[2]);
     switch (firstParam.mode) {
         case "raw": return rawAction;
@@ -16,44 +18,46 @@ export function action() {
         default: return mutateAction;
     }
 }
-export function getRawActionContext(thisArg) {
+exports.action = action;
+function getRawActionContext(thisArg) {
     return thisArg;
 }
+exports.getRawActionContext = getRawActionContext;
 function rawAction(target, key, descriptor) {
     var _a;
     var func = descriptor.value || new Function();
     var vuexFunc = function (context, payload) {
         return func.call(context, payload);
     };
-    var actions = target[_actions];
+    var actions = target[symbols_1._actions];
     if (actions === undefined) {
-        target[_actions] = (_a = {},
+        target[symbols_1._actions] = (_a = {},
             _a[key] = vuexFunc,
             _a);
     }
     else {
-        target[_actions][key] = vuexFunc;
+        target[symbols_1._actions][key] = vuexFunc;
     }
 }
 function mutateAction(target, key, descriptor) {
-    if (target[_actions_register] === undefined) {
-        target[_actions_register] = [{ name: key, descriptor: descriptor }];
+    if (target[symbols_1._actions_register] === undefined) {
+        target[symbols_1._actions_register] = [{ name: key, descriptor: descriptor }];
     }
     else {
-        target[_actions_register].push({ name: key, descriptor: descriptor });
+        target[symbols_1._actions_register].push({ name: key, descriptor: descriptor });
     }
 }
-export function getMutatedActions(cls) {
+function getMutatedActions(cls) {
     var actions = {};
-    var actionsRegister = cls.prototype[_actions_register];
+    var actionsRegister = cls.prototype[symbols_1._actions_register];
     if (actionsRegister === undefined || actionsRegister.length === 0)
         return actions;
     var _loop_1 = function (action_1) {
         var func = action_1.descriptor.value;
         actions[action_1.name] = function (context, payload) {
             //@ts-ignore
-            cls.prototype[_namespacedPath] = "";
-            var proxy = createProxy(context, cls, _contextProxy);
+            cls.prototype[symbols_1._namespacedPath] = "";
+            var proxy = module_1.createProxy(context, cls, symbols_1._contextProxy);
             return func.call(proxy, payload);
         };
     };
@@ -63,4 +67,5 @@ export function getMutatedActions(cls) {
     }
     return actions;
 }
+exports.getMutatedActions = getMutatedActions;
 //# sourceMappingURL=actions.js.map
