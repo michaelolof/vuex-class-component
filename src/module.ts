@@ -1,3 +1,4 @@
+import getDescriptors from 'object.getownpropertydescriptors'
 import { getMutatedActions as getProxiedActions, ActionRegister } from "./actions";
 import { _state, _mutations, _getters, _proxy, _map, _store, _namespacedPath, _actions_register, _actions, MutationFunction, GetterFunction, ActionFunction, VuexMap, _submodule, SubModuleObject, _module } from "./symbols";
 //@ts-ignore
@@ -10,6 +11,7 @@ export type VuexModuleTarget = "core" | "nuxt";
 export class VuexModule {
 
   static CreateSubModule<V extends typeof VuexModule>(SubModule: V) {
+    // @ts-ignore
     return {
       type: _submodule,
       store: SubModule,
@@ -36,7 +38,7 @@ function extractState( cls :typeof VuexModule, target :VuexModuleTarget = "core"
   switch( target ) {
     case "core": return cls.prototype[ _state ];
     case "nuxt": return () => cls.prototype[ _state ];
-    default: return cls.prototype [ _state ]; 
+    default: return cls.prototype [ _state ];
   }
 }
 
@@ -158,7 +160,7 @@ export function Module(options = defaultOptions) {
 
     target.prototype[_state] = stateObj;
 
-    const fields = Object.getOwnPropertyDescriptors(target.prototype);
+    const fields = getDescriptors(target.prototype);
     if (target.prototype[_getters] === undefined) target.prototype[_getters] = {}
     for (let field in fields) {
       const getterField = fields[field].get;
