@@ -10,6 +10,7 @@ export const _proxy = "__proxy_prototype__";
 export const _contextProxy = "__context_proxy__";
 export const _store = "__store__";
 export const _namespacedPath = "__namespacedPath__";
+export const _target = "__module_target__";
 export const _submodule = "__submodule__";
 export const _module = "__module__";
 

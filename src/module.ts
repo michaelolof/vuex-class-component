@@ -1,11 +1,10 @@
+
 import { getMutatedActions as getProxiedActions, ActionRegister } from "./actions";
-import { _state, _mutations, _getters, _proxy, _map, _store, _namespacedPath, _actions_register, _actions, MutationFunction, GetterFunction, ActionFunction, VuexMap, _submodule, SubModuleObject, _module } from "./symbols";
+import { _state, _mutations, _getters, _proxy, _map, _store, _namespacedPath, _actions_register, _actions, MutationFunction, GetterFunction, ActionFunction, VuexMap, _submodule, SubModuleObject, _module, _target } from "./symbols";
 //@ts-ignore
 import { Store } from "vuex";
 
 export type VuexClassConstructor<T> = new () => T
-
-export type VuexModuleTarget = "core" | "nuxt";
 
 export class VuexModule {
 
@@ -132,44 +131,51 @@ export interface VuexModule {
   [_module]: Record<string, any>;
 }
 
+export type VuexModuleTarget = "core" | "nuxt";
 
-export function Module({ namespacedPath = "" }) {
+interface ModuleOptions {
+  namespacedPath? :string;
+  target? :VuexModuleTarget
+}
 
-  return function( target :typeof VuexModule ) :void {
-    const targetInstance = new target();
+
+export function Module({ namespacedPath = "", target = "core"  } :ModuleOptions ) {
+
+  return function( _module :typeof VuexModule ) :void {
+    const targetInstance = new _module();
 
     const states = Object.getOwnPropertyNames( targetInstance );
     const stateObj: Record<string, any> = {}
-    if( target.prototype[ _map ] === undefined ) target.prototype[ _map ] = [];
+    if( _module.prototype[ _map ] === undefined ) _module.prototype[ _map ] = [];
 
     for( let stateField of states ) {
       const stateValue = targetInstance[ stateField ];
       if ( stateValue === undefined ) continue;
 
       if ( subModuleObjectIsFound( stateValue )) {
-        handleSubModule( target, stateField, stateValue )
+        handleSubModule( _module, stateField, stateValue )
         continue;
       }
       stateObj[ stateField ] = stateValue;
-      target.prototype[ _map ].push({ value: stateField, type: "state" });
+      _module.prototype[ _map ].push({ value: stateField, type: "state" });
     }
 
-    target.prototype[ _state ] = stateObj;
+    _module.prototype[ _state ] = stateObj;
 
-    const fields = Object.getOwnPropertyDescriptors( target.prototype );
-    if ( target.prototype[ _getters ] === undefined ) target.prototype[ _getters ] = {}
+    const fields = Object.getOwnPropertyDescriptors( _module.prototype );
+    if ( _module.prototype[ _getters ] === undefined ) _module.prototype[ _getters ] = {}
     for (let field in fields) {
       const getterField = fields[ field ].get;
       if ( getterField ) {
         const func = function (state: any) {
           return getterField.call(state);
         }
-        target.prototype[_getters][field] = func;
+        _module.prototype[_getters][field] = func;
       }
     }
 
-    if ( namespacedPath.length > 0 ) target.prototype[ _namespacedPath ] = namespacedPath;
-
+    if ( namespacedPath.length > 0 ) _module.prototype[ _namespacedPath ] = namespacedPath;
+    _module[ _target ] = target;
   }
 }
 
