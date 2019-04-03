@@ -1,4 +1,3 @@
-"use strict";
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -10,55 +9,51 @@ var __assign = (this && this.__assign) || function () {
     };
     return __assign.apply(this, arguments);
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-var object_getownpropertydescriptors_1 = __importDefault(require("object.getownpropertydescriptors"));
-var actions_1 = require("./actions");
-var symbols_1 = require("./symbols");
+import getDescriptors from "object.getownpropertydescriptors";
+import { getMutatedActions as getProxiedActions } from "./actions";
+import { _state, _mutations, _getters, _proxy, _map, _store, _namespacedPath, _actions_register, _actions, _submodule, _module, _target } from "./symbols";
 var VuexModule = /** @class */ (function () {
     function VuexModule() {
     }
     VuexModule.CreateSubModule = function (SubModule) {
         return {
-            type: symbols_1._submodule,
+            type: _submodule,
             store: SubModule,
         };
     };
     VuexModule.CreateProxy = function ($store, cls) {
-        return createProxy($store, cls, symbols_1._proxy);
+        return createProxy($store, cls, _proxy);
     };
     VuexModule.ExtractVuexModule = function (cls) {
         return {
             namespaced: extractNameSpaced(cls),
             state: extractState(cls),
-            mutations: cls.prototype[symbols_1._mutations],
+            mutations: cls.prototype[_mutations],
             actions: extractActions(cls),
-            getters: cls.prototype[symbols_1._getters],
-            modules: cls.prototype[symbols_1._module],
+            getters: cls.prototype[_getters],
+            modules: cls.prototype[_module],
         };
     };
     return VuexModule;
 }());
-exports.VuexModule = VuexModule;
+export { VuexModule };
 function extractNameSpaced(cls) {
-    var namespacedPath = cls.prototype[symbols_1._namespacedPath] || "";
+    var namespacedPath = cls.prototype[_namespacedPath] || "";
     return namespacedPath.length > 0 ? true : false;
 }
 function extractState(cls) {
-    switch (cls.prototype[symbols_1._target]) {
-        case "core": return cls.prototype[symbols_1._state];
-        case "nuxt": return function () { return cls.prototype[symbols_1._state]; };
-        default: return cls.prototype[symbols_1._state];
+    switch (cls.prototype[_target]) {
+        case "core": return cls.prototype[_state];
+        case "nuxt": return function () { return cls.prototype[_state]; };
+        default: return cls.prototype[_state];
     }
 }
 function extractActions(cls) {
-    var proxiedActions = actions_1.getMutatedActions(cls);
-    var rawActions = cls.prototype[symbols_1._actions];
+    var proxiedActions = getProxiedActions(cls);
+    var rawActions = cls.prototype[_actions];
     var actions = __assign({}, proxiedActions, rawActions);
     //Update prototype with mutated actions.
-    cls.prototype[symbols_1._actions] = actions;
+    cls.prototype[_actions] = actions;
     return actions;
 }
 function getValueByPath(object, path) {
@@ -70,23 +65,23 @@ function getValueByPath(object, path) {
     }
     return value;
 }
-function createProxy($store, cls, cachePath) {
+export function createProxy($store, cls, cachePath) {
     var rtn = {};
-    var path = cls.prototype[symbols_1._namespacedPath];
+    var path = cls.prototype[_namespacedPath];
     var prototype = cls.prototype;
     if (prototype[cachePath] === undefined) { // Proxy has not been cached.
-        Object.getOwnPropertyNames(prototype[symbols_1._getters] || {}).map(function (name) {
+        Object.getOwnPropertyNames(prototype[_getters] || {}).map(function (name) {
             Object.defineProperty(rtn, name, {
                 get: function () { return $store.getters[path + name]; }
             });
         });
-        Object.getOwnPropertyNames(prototype[symbols_1._state] || {}).map(function (name) {
+        Object.getOwnPropertyNames(prototype[_state] || {}).map(function (name) {
             // If state has already been defined as a getter, do not redefine.
             if (rtn.hasOwnProperty(name))
                 return;
-            if (prototype[symbols_1._submodule] && prototype[symbols_1._submodule].hasOwnProperty(name)) {
+            if (prototype[_submodule] && prototype[_submodule].hasOwnProperty(name)) {
                 Object.defineProperty(rtn, name, {
-                    value: prototype[symbols_1._state][name],
+                    value: prototype[_state][name],
                     writable: true,
                 });
             }
@@ -96,23 +91,23 @@ function createProxy($store, cls, cachePath) {
                 });
             }
         });
-        Object.getOwnPropertyNames(prototype[symbols_1._mutations] || {}).map(function (name) {
+        Object.getOwnPropertyNames(prototype[_mutations] || {}).map(function (name) {
             rtn[name] = function (payload) {
                 $store.commit(path + name, payload);
             };
         });
-        Object.getOwnPropertyNames(prototype[symbols_1._actions] || {}).map(function (name) {
+        Object.getOwnPropertyNames(prototype[_actions] || {}).map(function (name) {
             rtn[name] = function (payload) {
                 return $store.dispatch(path + name, payload);
             };
         });
-        Object.getOwnPropertyNames(prototype[symbols_1._submodule] || {}).map(function (name) {
-            var vxmodule = cls.prototype[symbols_1._submodule][name];
-            vxmodule.prototype[symbols_1._namespacedPath] = path + name + "/";
+        Object.getOwnPropertyNames(prototype[_submodule] || {}).map(function (name) {
+            var vxmodule = cls.prototype[_submodule][name];
+            vxmodule.prototype[_namespacedPath] = path + name + "/";
             rtn[name] = vxmodule.CreateProxy($store, vxmodule);
         });
         // Cache proxy.
-        prototype[symbols_1._proxy] = rtn;
+        prototype[_proxy] = rtn;
     }
     else {
         // Use cached proxy.
@@ -120,19 +115,18 @@ function createProxy($store, cls, cachePath) {
     }
     return rtn;
 }
-exports.createProxy = createProxy;
 var defaultModuleOptions = {
     namespacedPath: "",
     target: "core",
 };
-function Module(_a) {
+export function Module(_a) {
     var _b = _a === void 0 ? defaultModuleOptions : _a, _c = _b.namespacedPath, namespacedPath = _c === void 0 ? "" : _c, _d = _b.target, target = _d === void 0 ? "core" : _d;
     return function (_module) {
         var targetInstance = new _module();
         var states = Object.getOwnPropertyNames(targetInstance);
         var stateObj = {};
-        if (_module.prototype[symbols_1._map] === undefined)
-            _module.prototype[symbols_1._map] = [];
+        if (_module.prototype[_map] === undefined)
+            _module.prototype[_map] = [];
         for (var _i = 0, states_1 = states; _i < states_1.length; _i++) {
             var stateField = states_1[_i];
             var stateValue = targetInstance[stateField];
@@ -143,47 +137,46 @@ function Module(_a) {
                 continue;
             }
             stateObj[stateField] = stateValue;
-            _module.prototype[symbols_1._map].push({ value: stateField, type: "state" });
+            _module.prototype[_map].push({ value: stateField, type: "state" });
         }
-        _module.prototype[symbols_1._state] = stateObj;
-        var fields = object_getownpropertydescriptors_1.default(_module.prototype);
-        if (_module.prototype[symbols_1._getters] === undefined)
-            _module.prototype[symbols_1._getters] = {};
+        _module.prototype[_state] = stateObj;
+        var fields = getDescriptors(_module.prototype);
+        if (_module.prototype[_getters] === undefined)
+            _module.prototype[_getters] = {};
         var _loop_1 = function (field) {
             var getterField = fields[field].get;
             if (getterField) {
                 var func = function (state) {
                     return getterField.call(state);
                 };
-                _module.prototype[symbols_1._getters][field] = func;
+                _module.prototype[_getters][field] = func;
             }
         };
         for (var field in fields) {
             _loop_1(field);
         }
-        _module.prototype[symbols_1._namespacedPath] = namespacedPath;
-        _module.prototype[symbols_1._target] = target;
+        _module.prototype[_namespacedPath] = namespacedPath;
+        _module.prototype[_target] = target;
     };
 }
-exports.Module = Module;
 function subModuleObjectIsFound(stateValue) {
     if (stateValue === null)
         return false;
-    return (typeof stateValue === "object") && (stateValue.type === symbols_1._submodule);
+    return (typeof stateValue === "object") && (stateValue.type === _submodule);
 }
 function handleSubModule(target, stateField, stateValue) {
     var _a, _b;
-    if (target.prototype[symbols_1._module] === undefined) {
-        target.prototype[symbols_1._module] = (_a = {},
+    if (target.prototype[_module] === undefined) {
+        target.prototype[_module] = (_a = {},
             _a[stateField] = stateValue.store.ExtractVuexModule(stateValue.store),
             _a);
-        target.prototype[symbols_1._submodule] = (_b = {},
+        target.prototype[_submodule] = (_b = {},
             _b[stateField] = stateValue.store,
             _b);
     }
     else {
-        target.prototype[symbols_1._module][stateField] = stateValue.store.ExtractVuexModule(stateValue.store);
-        target.prototype[symbols_1._submodule][stateField] = stateValue.store;
+        target.prototype[_module][stateField] = stateValue.store.ExtractVuexModule(stateValue.store);
+        target.prototype[_submodule][stateField] = stateValue.store;
     }
 }
 //# sourceMappingURL=module.js.map

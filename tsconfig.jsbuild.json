@@ -1,0 +1,7 @@
+{
+  "extends": "./base.tsconfig",
+  "compilerOptions": {
+    "module": "es2015",
+    "outDir": "./js",                        
+  }
+}

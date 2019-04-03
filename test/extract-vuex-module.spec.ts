@@ -43,9 +43,38 @@ class UserStore extends VuexModule {
 	}
 }
 
+@Module({ namespacedPath: 'user/', target: "nuxt" })
+class NuxtUserStore extends VuexModule {
+	settings = UserSettings.CreateSubModule(UserSettings)
+
+	private firstname = 'Michael'
+	private lastname = 'Olofinjana'
+	@getter speciality = 'JavaScript' // The @getter decorator automatically exposes a defined state as a getter.
+	@getter occupation = 'Developer'
+
+	@mutation changeName({firstname, lastname}:Name) {
+		this.firstname = firstname
+		this.lastname = lastname
+	}
+
+	@action async doSomethingAsync() { return 20 }
+
+	@action async doAnotherAsyncStuff(payload) {
+		const number = await this.doSomethingAsync()
+		this.changeName({ firstname: 'John', lastname: 'Doe' })
+		return payload + this.fullName
+	}
+
+	// Explicitly define a vuex getter using class getters.
+	get fullName() {
+		return this.firstname + ' ' + this.lastname
+	}
+}
+
+
 describe('ExtractVuexModule', () => {
 	it('should extract all properties as state', () => {
-		const { state } = UserStore.ExtractVuexModule(UserStore)
+		const { state } = UserStore.ExtractVuexModule( UserStore )
 
 		expect(state).toEqual({
 				firstname: 'Michael',
@@ -56,8 +85,8 @@ describe('ExtractVuexModule', () => {
 		expect(state).not.toHaveProperty('settings')
 	})
 
-	it('should extract all properties as state in a function for target => nuxt', () => {
-		const { state } = UserStore.ExtractVuexModule( UserStore, "nuxt" );
+	it('should extract all properties as state in a function for NuxtUserStore', () => {
+		const { state } = NuxtUserStore.ExtractVuexModule( NuxtUserStore );
 		expect( typeof state ).toBe( "function" );
 		expect( state() ).toEqual({
 			firstname: "Michael",

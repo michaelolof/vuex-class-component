@@ -10,6 +10,7 @@ exports._proxy = "__proxy_prototype__";
 exports._contextProxy = "__context_proxy__";
 exports._store = "__store__";
 exports._namespacedPath = "__namespacedPath__";
+exports._target = "__module_target__";
 exports._submodule = "__submodule__";
 exports._module = "__module__";
 //# sourceMappingURL=symbols.js.map

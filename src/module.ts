@@ -1,4 +1,4 @@
-
+import getDescriptors from "object.getownpropertydescriptors";
 import { getMutatedActions as getProxiedActions, ActionRegister } from "./actions";
 import { _state, _mutations, _getters, _proxy, _map, _store, _namespacedPath, _actions_register, _actions, MutationFunction, GetterFunction, ActionFunction, VuexMap, _submodule, SubModuleObject, _module, _target } from "./symbols";
 //@ts-ignore
@@ -19,10 +19,10 @@ export class VuexModule {
     return createProxy( $store, cls, _proxy )
   }
 
-  static ExtractVuexModule(cls :typeof VuexModule, target :VuexModuleTarget = "core") {
+  static ExtractVuexModule(cls :typeof VuexModule ) {   
     return  {
-      namespaced: cls.prototype[_namespacedPath].length > 0 ? true : false,
-      state: extractState( cls, target ),
+      namespaced: extractNameSpaced( cls ),
+      state: extractState( cls ),
       mutations: cls.prototype[_mutations],
       actions: extractActions( cls ),
       getters: cls.prototype[_getters],
@@ -31,8 +31,13 @@ export class VuexModule {
   }
 }
 
-function extractState( cls :typeof VuexModule, target :VuexModuleTarget = "core" ):any {
-  switch( target ) {
+function extractNameSpaced( cls :typeof VuexModule ) :boolean {
+  const namespacedPath = cls.prototype[ _namespacedPath ] || "";
+  return namespacedPath.length > 0 ? true : false
+}
+
+function extractState( cls :typeof VuexModule ):any {
+  switch( cls.prototype[ _target ] ) {
     case "core": return cls.prototype[ _state ];
     case "nuxt": return () => cls.prototype[ _state ];
     default: return cls.prototype [ _state ]; 
@@ -118,28 +123,33 @@ export function createProxy<V extends typeof VuexModule>($store :Store<any>, cls
 }
 
 export interface VuexModule {
-  [_state]: Record<string, any>;
-  [_mutations]: Record<string, MutationFunction>;
-  [_getters]: Record<string, GetterFunction>;
-  [_actions_register]: ActionRegister[];
-  [_actions]: Record<string, ActionFunction>;
-  [_map]: VuexMap[];
-  [_proxy]: Record<string, any>;
-  [_store]: Record<string, any>;
-  [_namespacedPath]: string;
-  [_submodule]: Record<string, typeof VuexModule>;
-  [_module]: Record<string, any>;
+  [ _state ] :Record<string, any>;
+  [ _mutations ] :Record<string, MutationFunction>;
+  [ _getters ] :Record<string, GetterFunction>;
+  [ _actions_register ] :ActionRegister[];
+  [ _actions ] :Record<string, ActionFunction>;
+  [ _map ] :VuexMap[];
+  [ _target ] :VuexModuleTarget;
+  [ _proxy ] :Record<string, any>;
+  [ _store ] :Record<string, any>;
+  [ _namespacedPath ] :string;
+  [ _submodule ] :Record<string, typeof VuexModule>;
+  [ _module ] :Record<string, any>;
 }
 
 export type VuexModuleTarget = "core" | "nuxt";
 
 interface ModuleOptions {
-  namespacedPath? :string;
-  target? :VuexModuleTarget
+  namespacedPath?: string,
+  target?: VuexModuleTarget
 }
 
+const defaultModuleOptions :ModuleOptions = {
+  namespacedPath: "",
+  target: "core",
+}
 
-export function Module({ namespacedPath = "", target = "core"  } :ModuleOptions ) {
+export function Module({ namespacedPath = "", target = "core" as VuexModuleTarget } = defaultModuleOptions ) {
 
   return function( _module :typeof VuexModule ) :void {
     const targetInstance = new _module();
@@ -162,7 +172,7 @@ export function Module({ namespacedPath = "", target = "core"  } :ModuleOptions 
 
     _module.prototype[ _state ] = stateObj;
 
-    const fields = Object.getOwnPropertyDescriptors( _module.prototype );
+    const fields = getDescriptors( _module.prototype );
     if ( _module.prototype[ _getters ] === undefined ) _module.prototype[ _getters ] = {}
     for (let field in fields) {
       const getterField = fields[ field ].get;
@@ -174,8 +184,8 @@ export function Module({ namespacedPath = "", target = "core"  } :ModuleOptions 
       }
     }
 
-    if ( namespacedPath.length > 0 ) _module.prototype[ _namespacedPath ] = namespacedPath;
-    _module[ _target ] = target;
+    _module.prototype[ _namespacedPath ] = namespacedPath;
+    _module.prototype[ _target ] = target;
   }
 }
 

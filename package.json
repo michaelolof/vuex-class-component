@@ -1,6 +1,6 @@
 {
   "name": "vuex-class-component",
-  "version": "1.5.6",
+  "version": "1.6.0",
   "description": "\"A Type Safe Vuex Module or Store Using ES6 Classes and ES7 Decorators written in TypeScript.\"",
   "main": "dist/index.js",
   "directories": {
@@ -9,7 +9,7 @@
   "scripts": {
     "test": "jest",
     "test:watch": "jest --watch",
-    "build": "tsc"
+    "build": "tsc && tsc -p ./tsconfig.jsbuild.json"
   },
   "keywords": [
     "Vuex with Type safety",
@@ -27,7 +27,6 @@
     "@types/jest": "^24.0.11",
     "@vue/test-utils": "^1.0.0-beta.29",
     "jest": "^24.5.0",
-    "object.getownpropertydescriptors": "^2.0.3",
     "ts-jest": "^24.0.0",
     "ts-loader": "^5.3.1",
     "typescript": "^3.2.2",
@@ -36,5 +35,7 @@
     "vuex": "^3.1.0",
     "webpack": "^4.28.0"
   },
-  "dependencies": {}
+  "dependencies": {
+    "object.getownpropertydescriptors": "^2.0.3"
+  }
 }

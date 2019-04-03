@@ -1,5 +1,4 @@
 # Vuex Class Component
-
 A Type Safe Solution for Vuex Modules using ES6 Classes and ES7 Decorators that works out of the box for TypeScript and JavaScript.
 
 ## Goals
@@ -7,11 +6,11 @@ A Type Safe Solution for Vuex Modules using ES6 Classes and ES7 Decorators that 
 * Provide proxies for getters, mutations and actions in a type safe way
 * Create a Vuex Manager for handling all vuex calls throughout your codebase.
 
-## Dependencies
-This module has no external dependencies. 
-
-## Changelog
+## Changelog 
+  - `v.1.1.0` - Sub Modules support. 
   - `v.1.4.0` - async/await now works with actions in mutatate mode. 
+  - `v.1.5.0` - JavaScript Support
+  - `v.1.6.0` - NuxtJS Support.
 
 ## Installation
 ```
@@ -21,19 +20,6 @@ $ npm install --save vuex-class-component
 ## Examples
   - Vuex Class Component Simple: https://github.com/michaelolof/vuex-class-component-simple
   - Vuex Class Component Test: https://github.com/michaelolof/vuex-class-component-test
-
-## JavaScript Support
-From version `1.5.0` JavaScript is now supported fully.
-To use vuex-class-component in your JavaScript files, ensure your babel.config.js file has the following plugins:
-```js
-module.exports = {
-  ...
-  plugins: [
-    ["@babel/plugin-proposal-decorators", { "legacy": true }],
-    ["@babel/plugin-proposal-class-properties", { "loose" : true }]
-  ]
-}
-```
 
 ## How to use
 Consider this example.
@@ -128,6 +114,7 @@ export const store = new Vuex.Store({
   }
 })
 ```
+
 ## Ok. So What About Vue Components?
 Ensuring type safety in Vuex Modules is just one half of the problem solved. We still need to use them in our Vue Components.\
 \
@@ -202,6 +189,34 @@ We could use this sub module in a class
 Now you can easily use in your Vue Components like:
 ```ts
   vxm.vehicle.car.drive() // driving on 4 wheels
+```
+
+## JavaScript Support
+From version `1.5.0` JavaScript is now supported fully.
+To use vuex-class-component in your JavaScript files, ensure your babel.config.js file has the following plugins:
+```js
+module.exports = {
+  ...
+  plugins: [
+    ["@babel/plugin-proposal-decorators", { "legacy": true }],
+    ["@babel/plugin-proposal-class-properties", { "loose" : true }]
+  ]
+}
+```
+And then use as follows
+```js
+import { Module, VuexModule, getter, action } from "vuex-class-component/js";
+```
+
+## NuxtJS Support
+From verison `1.6.0` Nuxt is also supported.
+To use `vuex-class-component` with Nuxt, You add a `target` property to the @Module decorator and set it to `"nuxt"`.
+```js
+@Module({ namespacedPath: "user/", target: "nuxt" })
+
+export class UserStore {
+  ...
+}
 ```
 
 ## A note on Vuex Actions?
