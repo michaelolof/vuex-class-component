@@ -4,5 +4,7 @@ test-ts/
 test-js/
 jest.config.js
 tsconfig.json
+base.tsconfig.json
+tsconfig.jsbuild.json
 node_modules
 .vscode/
