@@ -17,6 +17,7 @@
     "test-ts/",
     "test-js/",
     "dist/",
+    "js",
     "test/",
     "node_modules"
   ]
