@@ -8,11 +8,11 @@ export type VuexClassConstructor<T> = new () => T
 
 export class VuexModule {
 
-  static CreateSubModule<V extends typeof VuexModule>(SubModule: V) {
+  static CreateSubModule<V extends typeof VuexModule>(SubModule: V) :SubModuleObject {
     return {
       type: _submodule,
       store: SubModule,
-    } as InstanceType<V>
+    }
   }
 
   static CreateProxy<V extends typeof VuexModule>($store: Store<any>, cls: V) {
