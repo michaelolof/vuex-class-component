@@ -32,6 +32,11 @@ var VuexModule = /** @class */ (function () {
     VuexModule.ClearProxyCache = function (cls) {
         var prototype = cls.prototype;
         delete prototype[symbols_1._proxy];
+        delete prototype[symbols_1._contextProxy];
+        Object.getOwnPropertyNames(prototype[symbols_1._submodule] || {}).map(function (name) {
+            var vxmodule = cls.prototype[symbols_1._submodule][name];
+            vxmodule.ClearProxyCache(vxmodule);
+        });
     };
     VuexModule.ExtractVuexModule = function (cls) {
         return {

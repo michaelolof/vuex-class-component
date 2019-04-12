@@ -11,7 +11,7 @@ var __assign = (this && this.__assign) || function () {
 };
 import getDescriptors from "object.getownpropertydescriptors";
 import { getMutatedActions as getProxiedActions } from "./actions";
-import { _state, _mutations, _getters, _proxy, _map, _store, _namespacedPath, _actions_register, _actions, _submodule, _module, _target } from "./symbols";
+import { _state, _mutations, _getters, _proxy, _map, _store, _namespacedPath, _actions_register, _actions, _submodule, _module, _target, _contextProxy } from './symbols';
 var VuexModule = /** @class */ (function () {
     function VuexModule() {
     }
@@ -27,6 +27,11 @@ var VuexModule = /** @class */ (function () {
     VuexModule.ClearProxyCache = function (cls) {
         var prototype = cls.prototype;
         delete prototype[_proxy];
+        delete prototype[_contextProxy];
+        Object.getOwnPropertyNames(prototype[_submodule] || {}).map(function (name) {
+            var vxmodule = cls.prototype[_submodule][name];
+            vxmodule.ClearProxyCache(vxmodule);
+        });
     };
     VuexModule.ExtractVuexModule = function (cls) {
         return {

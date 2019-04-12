@@ -1,6 +1,25 @@
 import getDescriptors from "object.getownpropertydescriptors";
 import { getMutatedActions as getProxiedActions, ActionRegister } from "./actions";
-import { _state, _mutations, _getters, _proxy, _map, _store, _namespacedPath, _actions_register, _actions, MutationFunction, GetterFunction, ActionFunction, VuexMap, _submodule, SubModuleObject, _module, _target } from "./symbols";
+import {
+  _state,
+  _mutations,
+  _getters,
+  _proxy,
+  _map,
+  _store,
+  _namespacedPath,
+  _actions_register,
+  _actions,
+  MutationFunction,
+  GetterFunction,
+  ActionFunction,
+  VuexMap,
+  _submodule,
+  SubModuleObject,
+  _module,
+  _target,
+  _contextProxy
+} from './symbols'
 //@ts-ignore
 import { Store } from "vuex";
 
@@ -22,6 +41,11 @@ export class VuexModule {
   static ClearProxyCache<V extends typeof VuexModule>(cls: V) {
     const prototype = cls.prototype as any
     delete prototype[_proxy]
+    delete prototype[_contextProxy]
+    Object.getOwnPropertyNames( prototype[ _submodule ] || {} ).map( name => {
+      const vxmodule = cls.prototype[ _submodule ][ name ];
+      vxmodule.ClearProxyCache(vxmodule)
+    })
   }
 
   static ExtractVuexModule(cls :typeof VuexModule ) {

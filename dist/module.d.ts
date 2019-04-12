@@ -1,5 +1,5 @@
 import { ActionRegister } from "./actions";
-import { _state, _mutations, _getters, _proxy, _map, _store, _namespacedPath, _actions_register, _actions, MutationFunction, GetterFunction, ActionFunction, VuexMap, _submodule, _module, _target } from "./symbols";
+import { _state, _mutations, _getters, _proxy, _map, _store, _namespacedPath, _actions_register, _actions, MutationFunction, GetterFunction, ActionFunction, VuexMap, _submodule, _module, _target } from './symbols';
 import { Store } from "vuex";
 export declare type VuexClassConstructor<T> = new () => T;
 export declare class VuexModule {
