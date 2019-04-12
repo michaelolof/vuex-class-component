@@ -5,6 +5,7 @@ export declare type VuexClassConstructor<T> = new () => T;
 export declare class VuexModule {
     static CreateSubModule<V extends typeof VuexModule>(SubModule: V): InstanceType<V>;
     static CreateProxy<V extends typeof VuexModule>($store: Store<any>, cls: V): InstanceType<V>;
+    static ClearProxyCache<V extends typeof VuexModule>(cls: V): void;
     static ExtractVuexModule(cls: typeof VuexModule): {
         namespaced: boolean;
         state: any;
@@ -16,7 +17,7 @@ export declare class VuexModule {
         modules: Record<string, any>;
     };
 }
-export declare function createProxy<V extends typeof VuexModule>($store: Store<any>, cls: V, cachePath: string): InstanceType<V>;
+export declare function createProxy<V extends typeof VuexModule>($store: Store<any>, cls: V, namespacedPath: string, cachePath: string): InstanceType<V>;
 export interface VuexModule {
     [_state]: Record<string, any>;
     [_mutations]: Record<string, MutationFunction>;

@@ -27,7 +27,11 @@ var VuexModule = /** @class */ (function () {
         };
     };
     VuexModule.CreateProxy = function ($store, cls) {
-        return createProxy($store, cls, symbols_1._proxy);
+        return createProxy($store, cls, cls.prototype[symbols_1._namespacedPath], symbols_1._proxy);
+    };
+    VuexModule.ClearProxyCache = function (cls) {
+        var prototype = cls.prototype;
+        delete prototype[symbols_1._proxy];
     };
     VuexModule.ExtractVuexModule = function (cls) {
         return {
@@ -48,9 +52,9 @@ function extractNameSpaced(cls) {
 }
 function extractState(cls) {
     switch (cls.prototype[symbols_1._target]) {
-        case "core": return cls.prototype[symbols_1._state];
-        case "nuxt": return function () { return cls.prototype[symbols_1._state]; };
-        default: return cls.prototype[symbols_1._state];
+        case "core": return __assign({}, cls.prototype[symbols_1._state]);
+        case "nuxt": return function () { return (__assign({}, cls.prototype[symbols_1._state])); };
+        default: return __assign({}, cls.prototype[symbols_1._state]);
     }
 }
 function extractActions(cls) {
@@ -70,9 +74,9 @@ function getValueByPath(object, path) {
     }
     return value;
 }
-function createProxy($store, cls, cachePath) {
+function createProxy($store, cls, namespacedPath, cachePath) {
     var rtn = {};
-    var path = cls.prototype[symbols_1._namespacedPath];
+    var path = namespacedPath;
     var prototype = cls.prototype;
     if (prototype[cachePath] === undefined) { // Proxy has not been cached.
         Object.getOwnPropertyNames(prototype[symbols_1._getters] || {}).map(function (name) {
