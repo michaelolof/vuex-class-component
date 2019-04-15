@@ -1,6 +1,25 @@
 import getDescriptors from "object.getownpropertydescriptors";
 import { getMutatedActions as getProxiedActions, ActionRegister } from "./actions";
-import { _state, _mutations, _getters, _proxy, _map, _store, _namespacedPath, _actions_register, _actions, MutationFunction, GetterFunction, ActionFunction, VuexMap, _submodule, SubModuleObject, _module, _target } from "./symbols";
+import {
+  _state,
+  _mutations,
+  _getters,
+  _proxy,
+  _map,
+  _store,
+  _namespacedPath,
+  _actions_register,
+  _actions,
+  MutationFunction,
+  GetterFunction,
+  ActionFunction,
+  VuexMap,
+  _submodule,
+  SubModuleObject,
+  _module,
+  _target,
+  _contextProxy
+} from './symbols'
 //@ts-ignore
 import { Store } from "vuex";
 
@@ -16,10 +35,20 @@ export class VuexModule {
   }
 
   static CreateProxy<V extends typeof VuexModule>($store: Store<any>, cls: V) {
-    return createProxy( $store, cls, _proxy )
+    return createProxy( $store, cls, cls.prototype[_namespacedPath], _proxy )
   }
 
-  static ExtractVuexModule(cls :typeof VuexModule ) {   
+  static ClearProxyCache<V extends typeof VuexModule>(cls: V) {
+    const prototype = cls.prototype as any
+    delete prototype[_proxy]
+    delete prototype[_contextProxy]
+    Object.getOwnPropertyNames( prototype[ _submodule ] || {} ).map( name => {
+      const vxmodule = cls.prototype[ _submodule ][ name ];
+      vxmodule.ClearProxyCache(vxmodule)
+    })
+  }
+
+  static ExtractVuexModule(cls :typeof VuexModule ) {
     return  {
       namespaced: extractNameSpaced( cls ),
       state: extractState( cls ),
@@ -38,9 +67,9 @@ function extractNameSpaced( cls :typeof VuexModule ) :boolean {
 
 function extractState( cls :typeof VuexModule ):any {
   switch( cls.prototype[ _target ] ) {
-    case "core": return cls.prototype[ _state ];
-    case "nuxt": return () => cls.prototype[ _state ];
-    default: return cls.prototype [ _state ]; 
+    case "core": return { ...cls.prototype[ _state ] };
+    case "nuxt": return () => ({ ...cls.prototype[ _state ] });
+    default: return { ...cls.prototype [ _state ] };
   }
 }
 
@@ -62,9 +91,9 @@ function getValueByPath (object: any, path: string) : any {
   return value
 }
 
-export function createProxy<V extends typeof VuexModule>($store :Store<any>, cls :V, cachePath :string) {
+export function createProxy<V extends typeof VuexModule>($store :Store<any>, cls :V, namespacedPath :string, cachePath :string) {
   let rtn: Record<any, any> = {}
-  const path = cls.prototype[_namespacedPath];
+  const path = namespacedPath;
   const prototype = cls.prototype as any
 
   if ( prototype[ cachePath ] === undefined ) { // Proxy has not been cached.
@@ -78,13 +107,13 @@ export function createProxy<V extends typeof VuexModule>($store :Store<any>, cls
     Object.getOwnPropertyNames( prototype[ _state ] || {} ).map( name => {
       // If state has already been defined as a getter, do not redefine.
       if( rtn.hasOwnProperty( name ) ) return;
-      
+
       if ( prototype[ _submodule ] && prototype[ _submodule ].hasOwnProperty( name ) ) {
         Object.defineProperty( rtn, name, {
           value: prototype[ _state ][ name ],
           writable: true,
         })
-      } 
+      }
       else {
         Object.defineProperty( rtn, name, {
           get: () => getValueByPath( $store.state, path + name )
@@ -118,7 +147,7 @@ export function createProxy<V extends typeof VuexModule>($store :Store<any>, cls
     // Use cached proxy.
     rtn = prototype[ cachePath ];
   }
-  
+
   return rtn as InstanceType<V>;
 }
 

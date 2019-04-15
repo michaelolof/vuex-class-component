@@ -17,7 +17,7 @@ export function action(options?:ActionOption):any
 export function action(target:any, key:string, descriptor:ActionDescriptor):any
 export function action(...params:any[]) {
   const firstParam = params[0] as VuexModule | ActionOption | undefined;
-  
+
   if( firstParam === undefined ) return mutateAction;
   if( firstParam instanceof VuexModule ) return mutateAction( firstParam, params[ 1 ], params[ 2 ] );
   switch( firstParam.mode ) {
@@ -42,7 +42,7 @@ function rawAction(target:any, key:string, descriptor:ActionDescriptor) {
     target[ _actions ] = {
       [ key ]: vuexFunc
     }
-  } 
+  }
   else {
     target[ _actions ][ key ] = vuexFunc;
   }
@@ -58,16 +58,14 @@ function mutateAction(target:VuexModule, key:string, descriptor:ActionDescriptor
 }
 
 export function getMutatedActions(cls:typeof VuexModule ) {
-  const actions:Record<any, any> = {}; 
-  const actionsRegister = cls.prototype[ _actions_register ] as ActionRegister[] | undefined;  
+  const actions:Record<any, any> = {};
+  const actionsRegister = cls.prototype[ _actions_register ] as ActionRegister[] | undefined;
   if( actionsRegister === undefined || actionsRegister.length === 0 ) return actions;
-  
+
   for(let action of actionsRegister) {
     let func = action.descriptor.value!;
     actions[ action.name ] = function( context:any, payload:any ) {
-      //@ts-ignore
-      cls.prototype[ _namespacedPath ] = "";
-      const proxy = createProxy( context, cls, _contextProxy );
+      const proxy = createProxy( context, cls, "", _contextProxy );
       return func.call( proxy, payload );
     }
   }

@@ -1,5 +1,5 @@
 import { VuexModule, createProxy } from "./module";
-import { _actions_register, _actions, _namespacedPath, _contextProxy } from "./symbols";
+import { _actions_register, _actions, _contextProxy } from "./symbols";
 export function action() {
     var params = [];
     for (var _i = 0; _i < arguments.length; _i++) {
@@ -51,9 +51,7 @@ export function getMutatedActions(cls) {
     var _loop_1 = function (action_1) {
         var func = action_1.descriptor.value;
         actions[action_1.name] = function (context, payload) {
-            //@ts-ignore
-            cls.prototype[_namespacedPath] = "";
-            var proxy = createProxy(context, cls, _contextProxy);
+            var proxy = createProxy(context, cls, "", _contextProxy);
             return func.call(proxy, payload);
         };
     };

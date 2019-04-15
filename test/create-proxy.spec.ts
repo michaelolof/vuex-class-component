@@ -64,6 +64,10 @@ describe('CreateProxy', () => {
 		})
 	})
 
+	afterEach(() => {
+		UserStore.ClearProxyCache(UserStore)
+	})
+
 	it('should proxy getters', () => {
 		const user = UserStore.CreateProxy(store, UserStore)
 
@@ -99,5 +103,32 @@ describe('CreateProxy', () => {
 
 		expect(user.firstname).toEqual('Ola')
 		expect(user.lastname).toEqual('Nordmann')
+	})
+
+	it('should reset state for each time you call clear cache', async () => {
+		let user = UserStore.CreateProxy(store, UserStore)
+		await user.changeName({ firstname: 'Ola', lastname: 'Nordmann' })
+
+		expect(user.fullName).toEqual('Ola Nordmann')
+
+		expect(user.firstname).toEqual('Ola')
+		expect(user.lastname).toEqual('Nordmann')
+
+		// Reset cache and create new store
+		UserStore.ClearProxyCache(UserStore)
+		localVue = createLocalVue()
+		localVue.use(Vuex)
+		store = new Store({
+			modules: {
+				user: UserStore.ExtractVuexModule(UserStore)
+			}
+		})
+
+		user = UserStore.CreateProxy(store, UserStore)
+
+		expect(user.fullName).toEqual('Michael Olofinjana')
+
+		expect(user.firstname).toEqual('Michael')
+		expect(user.lastname).toEqual('Olofinjana')
 	})
 })

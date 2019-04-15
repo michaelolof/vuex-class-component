@@ -11,6 +11,7 @@ A Type Safe Solution for Vuex Modules using ES6 Classes and ES7 Decorators that 
   - `v.1.4.0` - async/await now works with actions in mutatate mode. 
   - `v.1.5.0` - JavaScript Support
   - `v.1.6.0` - NuxtJS Support.
+  - `v.1.7.0` - Improved testability.
 
 ## Installation
 ```
@@ -218,6 +219,23 @@ export class UserStore {
   ...
 }
 ```
+
+## How to test
+
+To test components where interact with the state using a proxy, you have to create the proxy for each test, and clear the proxy cache, to keep the state clean in between tests.
+
+If you are using jest, you could clear the proxy cache in the afterEach callback.
+```js
+describe('my test suite', () => {
+	...
+	afterEach(() => {
+		UserStore.ClearProxyCache(UserStore)
+	})
+	...
+})
+```
+
+To ensure your proxy is recreated for each test, the easiest way is to create the proxy inside the [component](#ok-so-what-about-vue-components). If not you could pass the proxy into the component using [provide/inject](https://vuejs.org/v2/api/#provide-inject), or mock the proxy if you are importing it from another file ie. like a [vuex manager](#vuex-manager).
 
 ## A note on Vuex Actions?
 Vuex Actions comes in two modes. A `mutate` mode and a `raw` mode. Both can be very useful.\

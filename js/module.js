@@ -11,7 +11,7 @@ var __assign = (this && this.__assign) || function () {
 };
 import getDescriptors from "object.getownpropertydescriptors";
 import { getMutatedActions as getProxiedActions } from "./actions";
-import { _state, _mutations, _getters, _proxy, _map, _store, _namespacedPath, _actions_register, _actions, _submodule, _module, _target } from "./symbols";
+import { _state, _mutations, _getters, _proxy, _map, _store, _namespacedPath, _actions_register, _actions, _submodule, _module, _target, _contextProxy } from './symbols';
 var VuexModule = /** @class */ (function () {
     function VuexModule() {
     }
@@ -22,7 +22,16 @@ var VuexModule = /** @class */ (function () {
         };
     };
     VuexModule.CreateProxy = function ($store, cls) {
-        return createProxy($store, cls, _proxy);
+        return createProxy($store, cls, cls.prototype[_namespacedPath], _proxy);
+    };
+    VuexModule.ClearProxyCache = function (cls) {
+        var prototype = cls.prototype;
+        delete prototype[_proxy];
+        delete prototype[_contextProxy];
+        Object.getOwnPropertyNames(prototype[_submodule] || {}).map(function (name) {
+            var vxmodule = cls.prototype[_submodule][name];
+            vxmodule.ClearProxyCache(vxmodule);
+        });
     };
     VuexModule.ExtractVuexModule = function (cls) {
         return {
@@ -43,9 +52,9 @@ function extractNameSpaced(cls) {
 }
 function extractState(cls) {
     switch (cls.prototype[_target]) {
-        case "core": return cls.prototype[_state];
-        case "nuxt": return function () { return cls.prototype[_state]; };
-        default: return cls.prototype[_state];
+        case "core": return __assign({}, cls.prototype[_state]);
+        case "nuxt": return function () { return (__assign({}, cls.prototype[_state])); };
+        default: return __assign({}, cls.prototype[_state]);
     }
 }
 function extractActions(cls) {
@@ -65,9 +74,9 @@ function getValueByPath(object, path) {
     }
     return value;
 }
-export function createProxy($store, cls, cachePath) {
+export function createProxy($store, cls, namespacedPath, cachePath) {
     var rtn = {};
-    var path = cls.prototype[_namespacedPath];
+    var path = namespacedPath;
     var prototype = cls.prototype;
     if (prototype[cachePath] === undefined) { // Proxy has not been cached.
         Object.getOwnPropertyNames(prototype[_getters] || {}).map(function (name) {
