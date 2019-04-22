@@ -286,4 +286,4 @@ Mutated Actions can access state, getters, mutations and other actions with the 
 Raw Actions on the other hand gives you access to `rootState` and `rootGetters`. The only limitation to this appoach however is that **you can't and shouldn't use the `this` keyword.** Instead you should get back the context object with the `getRawActionContext` function and then treat the function body like a regular vuex action. 
 
 All actions MUST return a promise.\
-All actions proxies are totally type safe and can still be used normally in Vue components whether mutatated or raw.
+All actions proxies are totally type safe and can still be used normally in Vue components whether mutated or raw.
