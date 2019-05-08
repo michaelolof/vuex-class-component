@@ -26,6 +26,7 @@ import { Store } from "vuex";
 export type VuexClassConstructor<T> = new () => T
 
 export class VuexModule {
+  $store!: Store<any>
 
   static CreateSubModule<V extends typeof VuexModule>(SubModule: V) {
     return {
@@ -100,7 +101,7 @@ export function createProxy<V extends typeof VuexModule>($store :Store<any>, cls
 
     Object.getOwnPropertyNames( prototype[ _getters ] || {} ).map( name => {
       Object.defineProperty(rtn, name, {
-        get: () => $store.getters[path + name]
+        get: () => $store.getters[path + name]($store)
       })
     });
 
@@ -108,17 +109,9 @@ export function createProxy<V extends typeof VuexModule>($store :Store<any>, cls
       // If state has already been defined as a getter, do not redefine.
       if( rtn.hasOwnProperty( name ) ) return;
 
-      if ( prototype[ _submodule ] && prototype[ _submodule ].hasOwnProperty( name ) ) {
-        Object.defineProperty( rtn, name, {
-          value: prototype[ _state ][ name ],
-          writable: true,
-        })
-      }
-      else {
-        Object.defineProperty( rtn, name, {
-          get: () => getValueByPath( $store.state, path + name )
-        })
-      }
+	  Object.defineProperty( rtn, name, {
+	    get: () => getValueByPath( $store.state, path + name )
+	  })
 
     });
 
@@ -130,7 +123,7 @@ export function createProxy<V extends typeof VuexModule>($store :Store<any>, cls
 
     Object.getOwnPropertyNames( prototype[ _actions ] || {} ).map( name => {
       rtn[ name ] = function ( payload?: any ) {
-        return $store.dispatch(path + name, payload );
+        return $store.dispatch(path + name, { payload, $store } );
       }
     });
 
@@ -207,7 +200,9 @@ export function Module({ namespacedPath = "", target = "core" as VuexModuleTarge
       const getterField = fields[ field ].get;
       if ( getterField ) {
         const func = function (state: any) {
-          return getterField.call(state);
+          return function ($store: Store<any>) {
+            return getterField.call({...state, $store} );
+          }
         }
         _module.prototype[_getters][field] = func;
       }
