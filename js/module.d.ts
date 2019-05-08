@@ -3,6 +3,7 @@ import { _state, _mutations, _getters, _proxy, _map, _store, _namespacedPath, _a
 import { Store } from "vuex";
 export declare type VuexClassConstructor<T> = new () => T;
 export declare class VuexModule {
+    $store: Store<any>;
     static CreateSubModule<V extends typeof VuexModule>(SubModule: V): InstanceType<V>;
     static CreateProxy<V extends typeof VuexModule>($store: Store<any>, cls: V): InstanceType<V>;
     static ClearProxyCache<V extends typeof VuexModule>(cls: V): void;

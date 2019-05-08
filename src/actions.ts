@@ -1,6 +1,6 @@
 import { VuexModule, createProxy } from "./module";
 import { _actions_register, _mutations, _state, _getters, _actions, _namespacedPath, _contextProxy } from "./symbols";
-import { ActionContext } from 'vuex';
+import { ActionContext, Store } from 'vuex'
 
 export type ActionDescriptor = TypedPropertyDescriptor<(payload?:any) => Promise<any>>
 
@@ -64,8 +64,11 @@ export function getMutatedActions(cls:typeof VuexModule ) {
 
   for(let action of actionsRegister) {
     let func = action.descriptor.value!;
-    actions[ action.name ] = function( context:any, payload:any ) {
+    actions[ action.name ] = function( context:any, { payload, $store }: { payload: any, $store: Store<any>}) {
       const proxy = createProxy( context, cls, "", _contextProxy );
+      Object.defineProperty(proxy, '$store', {
+        value: $store
+      })
       return func.call( proxy, payload );
     }
   }

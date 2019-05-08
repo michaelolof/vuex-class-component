@@ -86,24 +86,16 @@ function createProxy($store, cls, namespacedPath, cachePath) {
     if (prototype[cachePath] === undefined) { // Proxy has not been cached.
         Object.getOwnPropertyNames(prototype[symbols_1._getters] || {}).map(function (name) {
             Object.defineProperty(rtn, name, {
-                get: function () { return $store.getters[path + name]; }
+                get: function () { return $store.getters[path + name]($store); }
             });
         });
         Object.getOwnPropertyNames(prototype[symbols_1._state] || {}).map(function (name) {
             // If state has already been defined as a getter, do not redefine.
             if (rtn.hasOwnProperty(name))
                 return;
-            if (prototype[symbols_1._submodule] && prototype[symbols_1._submodule].hasOwnProperty(name)) {
-                Object.defineProperty(rtn, name, {
-                    value: prototype[symbols_1._state][name],
-                    writable: true,
-                });
-            }
-            else {
-                Object.defineProperty(rtn, name, {
-                    get: function () { return getValueByPath($store.state, path + name); }
-                });
-            }
+            Object.defineProperty(rtn, name, {
+                get: function () { return getValueByPath($store.state, path + name); }
+            });
         });
         Object.getOwnPropertyNames(prototype[symbols_1._mutations] || {}).map(function (name) {
             rtn[name] = function (payload) {
@@ -112,7 +104,7 @@ function createProxy($store, cls, namespacedPath, cachePath) {
         });
         Object.getOwnPropertyNames(prototype[symbols_1._actions] || {}).map(function (name) {
             rtn[name] = function (payload) {
-                return $store.dispatch(path + name, payload);
+                return $store.dispatch(path + name, { payload: payload, $store: $store });
             };
         });
         Object.getOwnPropertyNames(prototype[symbols_1._submodule] || {}).map(function (name) {
@@ -162,7 +154,9 @@ function Module(_a) {
             var getterField = fields[field].get;
             if (getterField) {
                 var func = function (state) {
-                    return getterField.call(state);
+                    return function ($store) {
+                        return getterField.call(__assign({}, state, { $store: $store }));
+                    };
                 };
                 _module.prototype[symbols_1._getters][field] = func;
             }
