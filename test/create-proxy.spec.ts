@@ -27,6 +27,14 @@ class Something extends VuexModule {
 	something = 'nothing'
 }
 
+@Module({ namespacedPath: 'books/' })
+class Books extends VuexModule{
+	books: string[] = []
+
+	@mutation addBook(book: string) {
+		this.books.push(book)
+	}
+}
 
 @Module({ namespacedPath: 'user/' })
 class UserStore extends VuexModule {
@@ -58,6 +66,11 @@ class UserStore extends VuexModule {
 
 	@action({ mode: 'mutate' }) async access$store() {
 		return this.$store.state.globalValue
+	}
+
+	@action async addBook(book: string) {
+		const booksProxy = Books.CreateProxy(this.$store, Books)
+		booksProxy.addBook(book)
 	}
 
 	// Explicitly define a vuex getter using class getters.
@@ -169,11 +182,29 @@ describe('CreateProxy', () => {
 		expect(user.lastname).toEqual('Olofinjana')
 	})
 
+	it('should create proxy inside module', async () => {
+		UserStore.ClearProxyCache(UserStore)
+		localVue = createLocalVue()
+		localVue.use(Vuex)
+		store = new Store({
+			modules: {
+				user: UserStore.ExtractVuexModule(UserStore),
+				books: Books.ExtractVuexModule(Books)
+			}
+		})
+
+		const user = UserStore.CreateProxy(store, UserStore)
+		const books = Books.CreateProxy(store, Books)
+
+		expect(books.books).toEqual([])
+		await user.addBook('My new book')
+		expect(books.books).toContain('My new book')
+	})
+
 	it('should provide store instance on $store field', async () => {
 		UserStore.ClearProxyCache(UserStore)
 		localVue = createLocalVue()
 		localVue.use(Vuex)
-		const mock = jest.fn()
 		store = new Store({
 			modules: {
 				user: UserStore.ExtractVuexModule(UserStore)
