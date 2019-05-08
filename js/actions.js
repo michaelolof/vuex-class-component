@@ -50,8 +50,12 @@ export function getMutatedActions(cls) {
         return actions;
     var _loop_1 = function (action_1) {
         var func = action_1.descriptor.value;
-        actions[action_1.name] = function (context, payload) {
+        actions[action_1.name] = function (context, _a) {
+            var payload = _a.payload, $store = _a.$store;
             var proxy = createProxy(context, cls, "", _contextProxy);
+            Object.defineProperty(proxy, '$store', {
+                value: $store
+            });
             return func.call(proxy, payload);
         };
     };
