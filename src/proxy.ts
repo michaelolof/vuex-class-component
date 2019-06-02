@@ -45,9 +45,9 @@ export function _createProxy<T>(cls: T, $store: any, namespacedPath = "") {
   const proxy = {};
   const { state, mutations, actions, getters } = extractModule(VuexClass);
 
-  createGettersAndMutationProxyFromState( proxy, state, $store, namespacedPath );
+  createGettersAndMutationProxyFromState({ cls: VuexClass, proxy, state, $store, namespacedPath });
   createExplicitMutationsProxy({ cls: VuexClass, proxy, $store, namespacedPath });
-  createGettersAndGetterMutationsProxy({ cls: VuexClass, getters, proxy, $store, namespacedPath });
+  createGettersAndGetterMutationsProxy({ cls: VuexClass, mutations, getters, proxy, $store, namespacedPath });
   createActionProxy({ actions, proxy, $store, namespacedPath });
 
   runSetterCheck( VuexClass, getters )
@@ -56,7 +56,7 @@ export function _createProxy<T>(cls: T, $store: any, namespacedPath = "") {
   return proxy as InstanceType<T>;
 }
 
-function createGettersAndMutationProxyFromState(proxy :Map, state :Map, $store :any, namespacedPath = "", currentField = "") {
+function createGettersAndMutationProxyFromState({ cls, proxy, state, $store, namespacedPath = "", currentField = "" }: { cls: VuexModuleConstructor, proxy: Map; state: Map; $store: any; namespacedPath?: string; currentField?: string; }) {
   /**
    * 1. Go through all fields in the object and check the values of those fields. 
    *  
@@ -84,14 +84,21 @@ function createGettersAndMutationProxyFromState(proxy :Map, state :Map, $store :
           if( $store.getters ) return $store.getters[ namespacedPath + "__internal_getter__" ]( path )
           else return $store[ "__internal_getter__" ]( path ) 
         },
-        set: payload => $store.commit( namespacedPath + "__internal_mutator__", { field: path, payload }),
+        set: payload => { 
+          if( $store.commit ) $store.commit( namespacedPath + "__internal_mutator__", { field: path, payload });
+          else {
+            // We must be creating local proxies hence, $store.commit doesn't exist
+            const store = cls.prototype.__context_store__!;
+            store.commit( "__internal_mutator__", { field: path, payload })
+          }
+        },
       })
 
       continue;
     }
 
     proxy[field] = {};
-    createGettersAndMutationProxyFromState(proxy[field], value, $store, namespacedPath, currentField + field);
+    createGettersAndMutationProxyFromState({ proxy: proxy[field], state: value, $store, namespacedPath, currentField: currentField + field });
   
   }
 
@@ -106,14 +113,19 @@ function createExplicitMutationsProxy({ cls, proxy, $store, namespacedPath } :Mu
   }
 }
 
-function createGettersAndGetterMutationsProxy({ cls, getters, proxy, $store, namespacedPath } :GetterProxyCreator) {
+function createGettersAndGetterMutationsProxy({ cls, getters, mutations, proxy, $store, namespacedPath } :GetterProxyCreator) {
   
   const getterMutations = Object.keys( cls.prototype.__mutations_cache__.__setter_mutations__ );
-
   // If there are defined setter mutations that do not have a corresponding getter, 
   // throw an error. 
+  if( $store.__internal_getter__ ) {
+    $store.__internal_mutator__ = mutations.__internal_mutator__;
+  }
+
+  console.log( "proxy <<", $store );
 
   for( let field in getters ) {
+
 
     const fieldHasGetterAndMutation = getterMutations.indexOf( field ) > -1;
     if( fieldHasGetterAndMutation ) {
@@ -188,6 +200,7 @@ interface MutationProxyCreator extends ProxyCreator {
 
 interface GetterProxyCreator extends MutationProxyCreator {
   getters :Map;
+  mutations :Map;
 }
 
 interface ActionProxyCreator extends ProxyCreator {

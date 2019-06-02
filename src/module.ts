@@ -14,6 +14,7 @@ export function initializeStore( options ?:VuexModuleOptions ) {
   (VuexModule as VuexModuleConstructor).prototype.__vuex_module_cache__ = undefined;
   (VuexModule as VuexModuleConstructor).prototype.__vuex_proxy_cache__ = undefined;
   (VuexModule as VuexModuleConstructor).prototype.__vuex_local_proxy_cache__ = undefined;
+  (VuexModule as VuexModuleConstructor).prototype.__context_store__ = undefined;
   (VuexModule as VuexModuleConstructor).prototype.__mutations_cache__ = {
     __explicit_mutations__: {},
     __setter_mutations__: {}
@@ -88,7 +89,7 @@ function extractFromInstance( cls :VuexModuleConstructor ) {
 
     // Check if field is an explicit mutation.
     if( typeof instance[ field ] === "function" ) {
-      mutations[ field ] = instance[ field ];
+      mutations[ field ] = ( state :any, payload :any ) => instance[ field ].call( state, payload );
       continue;
     }
 
@@ -134,6 +135,7 @@ function extractFromPrototype( cls :VuexModuleConstructor ) {
     if( typeof descriptor.value === "function" ) {
       const func = descriptor.value as Function
       actions[ field ] = function( context :any, payload :any ) {
+        cls.prototype.__context_store__ = context;
         const proxy = createLocalProxy( cls, context );
         return func.call( proxy, payload )
       }

@@ -19,6 +19,7 @@ export interface VuexModuleInternals {
       __explicit_mutations__: {},
       __setter_mutations__: {},
     };
+    __context_store__: Map | undefined;
   }
 }
 
