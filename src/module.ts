@@ -1,209 +1,219 @@
-import getDescriptors from "object.getownpropertydescriptors";
-import { getMutatedActions as getProxiedActions, ActionRegister } from "./actions";
-import { _state, _mutations, _getters, _proxy, _map, _store, _namespacedPath, _actions_register, _actions, MutationFunction, GetterFunction, ActionFunction, VuexMap, _submodule, SubModuleObject, _module, _target } from "./symbols";
 //@ts-ignore
-import { Store } from "vuex";
+import getDescriptors from "object.getownpropertydescriptors";
+import { VuexModuleOptions, VuexModuleConstructor, DictionaryField, VuexModule, VuexObject, Map, FieldPayload } from "./interfaces";
+import { isFieldASubModule, extractVuexSubModule } from "./submodule";
+import { createLocalProxy } from './proxy';
 
-export type VuexClassConstructor<T> = new () => T
+export function initializeStore( options ?:VuexModuleOptions ) {
 
-export class VuexModule {
+  /**
+   * We do it like this because we don't want intelissense to pick up the
+   * options variable as it is an internal variable.
+   */
+  (VuexModule as VuexModuleConstructor).prototype.__options__ = options;
+  (VuexModule as VuexModuleConstructor).prototype.__vuex_module_cache__ = undefined;
+  (VuexModule as VuexModuleConstructor).prototype.__vuex_proxy_cache__ = undefined;
+  (VuexModule as VuexModuleConstructor).prototype.__vuex_local_proxy_cache__ = undefined;
+  (VuexModule as VuexModuleConstructor).prototype.__mutations_cache__ = {
+    __explicit_mutations__: {},
+    __setter_mutations__: {}
+  };
 
-  static CreateSubModule<V extends typeof VuexModule>(SubModule: V) {
-    return {
-      type: _submodule,
-      store: SubModule,
-    } as InstanceType<V>
-  }
+  return VuexModule;
 
-  static CreateProxy<V extends typeof VuexModule>($store: Store<any>, cls: V) {
-    return createProxy( $store, cls, _proxy )
-  }
-
-  static ExtractVuexModule(cls :typeof VuexModule ) {   
-    return  {
-      namespaced: extractNameSpaced( cls ),
-      state: extractState( cls ),
-      mutations: cls.prototype[_mutations],
-      actions: extractActions( cls ),
-      getters: cls.prototype[_getters],
-      modules: cls.prototype[_module],
-    };
-  }
 }
 
-function extractNameSpaced( cls :typeof VuexModule ) :boolean {
-  const namespacedPath = cls.prototype[ _namespacedPath ] || "";
-  return namespacedPath.length > 0 ? true : false
-}
+export function extractModule( cls :typeof VuexModule ) {
 
-function extractState( cls :typeof VuexModule ):any {
-  switch( cls.prototype[ _target ] ) {
-    case "core": return cls.prototype[ _state ];
-    case "nuxt": return () => cls.prototype[ _state ];
-    default: return cls.prototype [ _state ]; 
+  const VuexClass = cls as VuexModuleConstructor;
+
+  // Check if module has been cached, 
+  // and just return the cached version.
+  if( VuexClass.prototype.__vuex_module_cache__ ) {
+    return VuexClass.prototype.__vuex_module_cache__;
   }
+
+  // If not extract vuex module from class.
+  const fromInstance = extractFromInstance( VuexClass );
+  const fromPrototype = extractFromPrototype( VuexClass );
+
+  // Cache explicit mutations and getter mutations.
+  VuexClass.prototype.__mutations_cache__.__explicit_mutations__ = fromInstance.mutations;
+  VuexClass.prototype.__mutations_cache__.__setter_mutations__ = fromPrototype.mutations;
+
+  const vuexModule :VuexObject = {
+    namespaced: VuexClass.prototype.__options__ ? VuexClass.prototype.__options__.namespaced : false,
+    state: fromInstance.state,
+    mutations: { ...fromInstance.mutations, ...fromPrototype.mutations, __internal_mutator__: internalMutator },
+    getters: { ...fromPrototype.getters, __internal_getter__: internalGetter },
+    actions: fromPrototype.actions,
+    modules: fromInstance.submodules,
+  };
+
+  // Cache the vuex module on the class.
+  VuexClass.prototype.__vuex_module_cache__ = vuexModule;
+  const className = toCamelCase( VuexClass.name );
+  return { 
+    [ className ]: vuexModule
+  } as any
+
+} 
+
+export function toCamelCase(str :string){
+  return str[ 0 ].toLocaleLowerCase() + str.substring( 1 );
 }
 
-function extractActions( cls :typeof VuexModule ) {
-  const proxiedActions = getProxiedActions(cls);
-  const rawActions = cls.prototype[_actions] as Record<any, any>;
-  const actions = { ...proxiedActions, ...rawActions }
-  //Update prototype with mutated actions.
-  cls.prototype[ _actions ] = actions;
-  return actions;
-}
+function extractFromInstance( cls :VuexModuleConstructor ) {
 
-function getValueByPath (object: any, path: string) : any {
-  const pathArray = path.split('/')
-  let value : any = object
-  for (const part of pathArray) {
-    value = value[part]
-  }
-  return value
-}
+  const instance = new cls() as InstanceType<VuexModuleConstructor> & Map;
+  const classFields = Object.getOwnPropertyNames( instance );
+  const state :Map = {};
+  const mutations :Map = {};
+  const submodules :Map = {};
+  const moduleOptions = cls.prototype.__options__ || {};
 
-export function createProxy<V extends typeof VuexModule>($store :Store<any>, cls :V, cachePath :string) {
-  let rtn: Record<any, any> = {}
-  const path = cls.prototype[_namespacedPath];
-  const prototype = cls.prototype as any
+  for( let field of classFields ) {
+    /**
+     * Fields defined in a class can either be states or sub modules.
+     * First we check if the field is a submodule, if not then it 
+     * definitely must be a state.
+     */  
 
-  if ( prototype[ cachePath ] === undefined ) { // Proxy has not been cached.
+    // Check if field is a submodule.
+    const fieldIsSubModule = isFieldASubModule( instance, field  );
+    if( fieldIsSubModule ) {
+      submodules[ field ] = extractVuexSubModule( instance, field );
+      continue;
+    }
 
-    Object.getOwnPropertyNames( prototype[ _getters ] || {} ).map( name => {
-      Object.defineProperty(rtn, name, {
-        get: () => $store.getters[path + name]
-      })
-    });
+    // Check if field is an explicit mutation.
+    if( typeof instance[ field ] === "function" ) {
+      mutations[ field ] = instance[ field ];
+      continue;
+    }
 
-    Object.getOwnPropertyNames( prototype[ _state ] || {} ).map( name => {
-      // If state has already been defined as a getter, do not redefine.
-      if( rtn.hasOwnProperty( name ) ) return;
-      
-      if ( prototype[ _submodule ] && prototype[ _submodule ].hasOwnProperty( name ) ) {
-        Object.defineProperty( rtn, name, {
-          value: prototype[ _state ][ name ],
-          writable: true,
-        })
-      } 
-      else {
-        Object.defineProperty( rtn, name, {
-          get: () => getValueByPath( $store.state, path + name )
-        })
-      }
+    // If field is not a submodule, then it must be a state.
+    // Check if the vuex module is targeting nuxt. if not define state as normal.
+    if( moduleOptions.nuxt === true ) state[ field ] = () => instance[ field ];
+    else state[ field ] = instance[ field ];
 
-    });
-
-    Object.getOwnPropertyNames( prototype[ _mutations ] || {} ).map( name => {
-      rtn[ name ] = function( payload?: any ) {
-        $store.commit( path + name, payload );
-      }
-    });
-
-    Object.getOwnPropertyNames( prototype[ _actions ] || {} ).map( name => {
-      rtn[ name ] = function ( payload?: any ) {
-        return $store.dispatch(path + name, payload );
-      }
-    });
-
-    Object.getOwnPropertyNames( prototype[ _submodule ] || {} ).map( name => {
-      const vxmodule = cls.prototype[ _submodule ][ name ];
-      vxmodule.prototype[ _namespacedPath ] = path + name + "/";
-      rtn[ name ] = vxmodule.CreateProxy( $store, vxmodule );
-    })
-
-    // Cache proxy.
-    prototype[ _proxy ] = rtn;
-  }
-  else {
-    // Use cached proxy.
-    rtn = prototype[ cachePath ];
   }
   
-  return rtn as InstanceType<V>;
-}
-
-export interface VuexModule {
-  [ _state ] :Record<string, any>;
-  [ _mutations ] :Record<string, MutationFunction>;
-  [ _getters ] :Record<string, GetterFunction>;
-  [ _actions_register ] :ActionRegister[];
-  [ _actions ] :Record<string, ActionFunction>;
-  [ _map ] :VuexMap[];
-  [ _target ] :VuexModuleTarget;
-  [ _proxy ] :Record<string, any>;
-  [ _store ] :Record<string, any>;
-  [ _namespacedPath ] :string;
-  [ _submodule ] :Record<string, typeof VuexModule>;
-  [ _module ] :Record<string, any>;
-}
-
-export type VuexModuleTarget = "core" | "nuxt";
-
-interface ModuleOptions {
-  namespacedPath?: string,
-  target?: VuexModuleTarget
-}
-
-const defaultModuleOptions :ModuleOptions = {
-  namespacedPath: "",
-  target: "core",
-}
-
-export function Module({ namespacedPath = "", target = "core" as VuexModuleTarget } = defaultModuleOptions ) {
-
-  return function( _module :typeof VuexModule ) :void {
-    const targetInstance = new _module();
-
-    const states = Object.getOwnPropertyNames( targetInstance );
-    const stateObj: Record<string, any> = {}
-    if( _module.prototype[ _map ] === undefined ) _module.prototype[ _map ] = [];
-
-    for( let stateField of states ) {
-      const stateValue = targetInstance[ stateField ];
-      if ( stateValue === undefined ) continue;
-
-      if ( subModuleObjectIsFound( stateValue )) {
-        handleSubModule( _module, stateField, stateValue )
-        continue;
-      }
-      stateObj[ stateField ] = stateValue;
-      _module.prototype[ _map ].push({ value: stateField, type: "state" });
-    }
-
-    _module.prototype[ _state ] = stateObj;
-
-    const fields = getDescriptors( _module.prototype );
-    if ( _module.prototype[ _getters ] === undefined ) _module.prototype[ _getters ] = {}
-    for (let field in fields) {
-      const getterField = fields[ field ].get;
-      if ( getterField ) {
-        const func = function (state: any) {
-          return getterField.call(state);
-        }
-        _module.prototype[_getters][field] = func;
-      }
-    }
-
-    _module.prototype[ _namespacedPath ] = namespacedPath;
-    _module.prototype[ _target ] = target;
+  return {
+    submodules,
+    mutations,
+    state,
   }
 }
 
-function subModuleObjectIsFound(stateValue: any): stateValue is SubModuleObject {
-  if( stateValue === null ) return false;
-  return (typeof stateValue === "object") && (stateValue.type === _submodule);
+function extractFromPrototype( cls :VuexModuleConstructor ) {
+
+  const actions :Record<DictionaryField, any> = {};
+  const mutations :Record<DictionaryField, any>= {};
+  const getters :Record<DictionaryField, any> = {};
+  const descriptors :PropertyDescriptorMap = getDescriptors( cls.prototype );
+
+  for( let field in descriptors ) {
+    
+    // Ignore the constructor and module interals.
+    const fieldIsInternal = ( 
+      field === "constructor"             || 
+      field === "__options__"             ||
+      field === "__vuex_module_cache__"   ||
+      field === "__vuex_proxy_cache__"    ||
+      field === "__mutations_cache__"     ||
+      field === "__explicit_mutations__"  ||
+      field === "__getter_mutations__"
+    );
+
+    if( fieldIsInternal ) continue;
+
+    const descriptor = descriptors[ field ];
+
+    // If proptotype field is a function, extract as an action.
+    if( typeof descriptor.value === "function" ) {
+      const func = descriptor.value as Function
+      actions[ field ] = function( context :any, payload :any ) {
+        const proxy = createLocalProxy( cls, context );
+        return func.call( proxy, payload )
+      }
+
+      continue;
+    }
+
+    // If the prototype field has a getter.
+    if( descriptor.get ) {
+      getters[ field ] = ( state :any, context :Map ) => { 
+        const proxy = createLocalProxy( cls, context )
+        return descriptor.get!.call( proxy )
+      }
+    }
+
+    // if the prototype field has an explicit mutation (i.e setter).
+    if( descriptor.set ) {
+      mutations[ field ] = (state :any, payload :any) => descriptor.set!.call( state, payload )
+    }
+
+  }
+
+  return {
+    actions,
+    mutations,
+    getters
+  }
+
 }
 
-function handleSubModule(target: typeof VuexModule, stateField: string, stateValue: SubModuleObject) {
-  if (target.prototype[_module] === undefined) {
-    target.prototype[_module] = {
-      [stateField]: stateValue.store.ExtractVuexModule(stateValue.store),
-    }
-    target.prototype[_submodule] = {
-      [stateField]: stateValue.store
-    }
-  } else {
-    target.prototype[_module][stateField] = stateValue.store.ExtractVuexModule(stateValue.store);
-    target.prototype[_submodule][stateField] = stateValue.store;
+const internalMutator = ( state :Map, { field, payload } :FieldPayload ) => {
+  const fields = field.split( "." );
+  switch( fields.length ) {
+    case 1:
+      state[ fields[0] ] = payload;
+      break;
+    case 2:
+      state[ fields[0] ][ fields[1] ] = payload;
+      break;
+    case 3:
+      state[ fields[0] ][ fields[1] ][ fields[2] ] = payload;
+      break;
+    case 4:
+      state[ fields[0] ][ fields[1] ][ fields[2] ][ fields[3] ] = payload;
+      break;
+    case 5:
+      state[ fields[0] ][ fields[1] ][ fields[2] ][ fields[3] ][ fields[4] ] = payload;
+      break;
+    case 6:
+      state[ fields[0] ][ fields[1] ][ fields[2] ][ fields[3] ][ fields[4] ][ fields[ 5] ] = payload;
+      break;
+    case 7:
+      state[ fields[0] ][ fields[1] ][ fields[2] ][ fields[3] ][ fields[4] ][ fields[ 5] ][ fields[6] ] = payload;
+      break;
+  }
+}
+
+const internalGetter = ( state :any, context :any ) => ( field :string ) => {
+  const fields = field.split( "." );
+  switch( fields.length ) {
+    case 1: 
+      return state[ fields[0] ];
+      
+    case 2:
+      return state[ fields[0] ][ fields[1] ];
+      
+    case 3:
+      return state[ fields[0] ][ fields[1] ][ fields[2] ];
+      
+    case 4:
+      return state[ fields[0] ][ fields[1] ][ fields[2] ][ fields[3] ];
+      
+    case 5:
+      return state[ fields[0] ][ fields[1] ][ fields[2] ][ fields[3] ][ fields[4] ];
+      
+    case 6:
+      return state[ fields[0] ][ fields[1] ][ fields[2] ][ fields[3] ][ fields[4] ][ fields[ 5] ];
+      
+    case 7:
+      return state[ fields[0] ][ fields[1] ][ fields[2] ][ fields[3] ][ fields[4] ][ fields[ 5] ][ fields[6] ];
+      
   }
 }
