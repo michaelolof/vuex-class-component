@@ -1,4 +1,4 @@
-import { extractModule, toCamelCase } from "./module";
+import { extractVuexModule, toCamelCase } from "./module";
 import { VuexModuleConstructor, Map, VuexModule } from "./interfaces"
 
 
@@ -43,17 +43,28 @@ export function _createProxy<T>(cls: T, $store: any, namespacedPath = "") {
   //@ts-ignore
   const VuexClass = cls as VuexModuleConstructor;
   const proxy = {};
-  const { state, mutations, actions, getters } = extractModule(VuexClass);
+  const { state, mutations, actions, getters, modules } = extractVuexModule( VuexClass );
 
   createGettersAndMutationProxyFromState({ cls: VuexClass, proxy, state, $store, namespacedPath });
   createExplicitMutationsProxy({ cls: VuexClass, proxy, $store, namespacedPath });
   createGettersAndGetterMutationsProxy({ cls: VuexClass, mutations, getters, proxy, $store, namespacedPath });
   createActionProxy({ actions, proxy, $store, namespacedPath });
+  
+  createSubModuleProxy( $store, VuexClass, proxy, modules );
 
-  runSetterCheck( VuexClass, getters )
 
   //@ts-ignore
   return proxy as InstanceType<T>;
+}
+
+
+function createSubModuleProxy( $store :Map, cls:VuexModuleConstructor, proxy :Map, modules :Map ) {
+
+  for( let field in modules ) {
+    const subModuleClass = cls.prototype.__submodules_cache__[ field ];
+    proxy[ field ] = createProxy( subModuleClass, $store );
+  }
+
 }
 
 function createGettersAndMutationProxyFromState({ cls, proxy, state, $store, namespacedPath = "", currentField = "" }: { cls: VuexModuleConstructor, proxy: Map; state: Map; $store: any; namespacedPath?: string; currentField?: string; }) {
@@ -98,7 +109,7 @@ function createGettersAndMutationProxyFromState({ cls, proxy, state, $store, nam
     }
 
     proxy[field] = {};
-    createGettersAndMutationProxyFromState({ proxy: proxy[field], state: value, $store, namespacedPath, currentField: currentField + field });
+    createGettersAndMutationProxyFromState({ cls, proxy: proxy[field], state: value, $store, namespacedPath, currentField: currentField + field });
   
   }
 
@@ -121,8 +132,6 @@ function createGettersAndGetterMutationsProxy({ cls, getters, mutations, proxy, 
   if( $store.__internal_getter__ ) {
     $store.__internal_mutator__ = mutations.__internal_mutator__;
   }
-
-  console.log( "proxy <<", $store );
 
   for( let field in getters ) {
 
@@ -162,30 +171,31 @@ function runSetterCheck( cls :VuexModuleConstructor, getters :Map ) {
   // if there are setters defined that are not in getters.
   // throw an error.
   const setterMutations = cls.prototype.__mutations_cache__.__setter_mutations__;
-  for( let field in setterMutations ) {
-    const setterIsNotInGetters = Object.keys( getters ).indexOf( field ) < 0;
-    if( setterIsNotInGetters ) {
+  console.log( "Setter Mutations", cls.name, setterMutations );
+  // for( let field in setterMutations ) {
+  //   const setterIsNotInGetters = Object.keys( getters ).indexOf( field ) < 0;
+  //   if( setterIsNotInGetters ) {
 
-      throw new Error(
-        `\nImproper Use of Setter Mutations:\n` + 
-        `at >>\n` +
-        `set ${ field }( payload ) {\n` +
-        `\t...\n` +
-        `}\n` +
-        `\n` +
-        `Setter mutations should only be used if there is a corresponding getter defined.\n` +
-        `\n` +
-        `Either define a corresponding getter for this setter mutation or,\n` +
-        `Define them as an explicit mutation using function assignment.\n` +
-        `Example:\n` +
-        `--------------------\n` +
-        `${ field } = ( payload ) => {\n` +
-        ` ...\n` +
-        `}`
-      )
+      // throw new Error(
+      //   `\nImproper Use of Setter Mutations:\n` + 
+      //   `at >>\n` +
+      //   `set ${ field }( payload ) {\n` +
+      //   `\t...\n` +
+      //   `}\n` +
+      //   `\n` +
+      //   `Setter mutations should only be used if there is a corresponding getter defined.\n` +
+      //   `\n` +
+      //   `Either define a corresponding getter for this setter mutation or,\n` +
+      //   `Define them as an explicit mutation using function assignment.\n` +
+      //   `Example:\n` +
+      //   `--------------------\n` +
+      //   `${ field } = ( payload ) => {\n` +
+      //   ` ...\n` +
+      //   `}`
+      // )
 
-    }
-  }
+    // }
+  // }
 }
 
 interface ProxyCreator {
