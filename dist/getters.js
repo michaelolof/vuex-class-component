@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var symbols_1 = require("./symbols");
-var getterBuilder = function (field) { return new Function("state", "return state." + field); };
+var getterBuilder = function (field) { return new Function("state", "return function() { return state." + field + "; };"); };
 function getter(target, propertyKey) {
     var _a;
     var ctr = Object.getPrototypeOf(new target.constructor());

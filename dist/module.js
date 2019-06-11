@@ -27,7 +27,16 @@ var VuexModule = /** @class */ (function () {
         };
     };
     VuexModule.CreateProxy = function ($store, cls) {
-        return createProxy($store, cls, symbols_1._proxy);
+        return createProxy($store, cls, cls.prototype[symbols_1._namespacedPath], symbols_1._proxy);
+    };
+    VuexModule.ClearProxyCache = function (cls) {
+        var prototype = cls.prototype;
+        delete prototype[symbols_1._proxy];
+        delete prototype[symbols_1._contextProxy];
+        Object.getOwnPropertyNames(prototype[symbols_1._submodule] || {}).map(function (name) {
+            var vxmodule = cls.prototype[symbols_1._submodule][name];
+            vxmodule.ClearProxyCache(vxmodule);
+        });
     };
     VuexModule.ExtractVuexModule = function (cls) {
         return {
@@ -48,9 +57,9 @@ function extractNameSpaced(cls) {
 }
 function extractState(cls) {
     switch (cls.prototype[symbols_1._target]) {
-        case "core": return cls.prototype[symbols_1._state];
-        case "nuxt": return function () { return cls.prototype[symbols_1._state]; };
-        default: return cls.prototype[symbols_1._state];
+        case "core": return __assign({}, cls.prototype[symbols_1._state]);
+        case "nuxt": return function () { return (__assign({}, cls.prototype[symbols_1._state])); };
+        default: return __assign({}, cls.prototype[symbols_1._state]);
     }
 }
 function extractActions(cls) {
@@ -70,31 +79,23 @@ function getValueByPath(object, path) {
     }
     return value;
 }
-function createProxy($store, cls, cachePath) {
+function createProxy($store, cls, namespacedPath, cachePath) {
     var rtn = {};
-    var path = cls.prototype[symbols_1._namespacedPath];
+    var path = namespacedPath;
     var prototype = cls.prototype;
     if (prototype[cachePath] === undefined) { // Proxy has not been cached.
         Object.getOwnPropertyNames(prototype[symbols_1._getters] || {}).map(function (name) {
             Object.defineProperty(rtn, name, {
-                get: function () { return $store.getters[path + name]; }
+                get: function () { return $store.getters[path + name]($store); }
             });
         });
         Object.getOwnPropertyNames(prototype[symbols_1._state] || {}).map(function (name) {
             // If state has already been defined as a getter, do not redefine.
             if (rtn.hasOwnProperty(name))
                 return;
-            if (prototype[symbols_1._submodule] && prototype[symbols_1._submodule].hasOwnProperty(name)) {
-                Object.defineProperty(rtn, name, {
-                    value: prototype[symbols_1._state][name],
-                    writable: true,
-                });
-            }
-            else {
-                Object.defineProperty(rtn, name, {
-                    get: function () { return getValueByPath($store.state, path + name); }
-                });
-            }
+            Object.defineProperty(rtn, name, {
+                get: function () { return getValueByPath($store.state, path + name); }
+            });
         });
         Object.getOwnPropertyNames(prototype[symbols_1._mutations] || {}).map(function (name) {
             rtn[name] = function (payload) {
@@ -103,7 +104,7 @@ function createProxy($store, cls, cachePath) {
         });
         Object.getOwnPropertyNames(prototype[symbols_1._actions] || {}).map(function (name) {
             rtn[name] = function (payload) {
-                return $store.dispatch(path + name, payload);
+                return $store.dispatch(path + name, { payload: payload, $store: $store });
             };
         });
         Object.getOwnPropertyNames(prototype[symbols_1._submodule] || {}).map(function (name) {
@@ -153,7 +154,9 @@ function Module(_a) {
             var getterField = fields[field].get;
             if (getterField) {
                 var func = function (state) {
-                    return getterField.call(state);
+                    return function ($store) {
+                        return getterField.call(__assign({}, state, { $store: $store }));
+                    };
                 };
                 _module.prototype[symbols_1._getters][field] = func;
             }

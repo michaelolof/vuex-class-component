@@ -14,6 +14,7 @@ https://github.com/michaelolof/vuex-class-component/issues/27
   - `v.1.4.0` - async/await now works with actions in mutatate mode. 
   - `v.1.5.0` - JavaScript Support
   - `v.1.6.0` - NuxtJS Support.
+  - `v.1.7.0` - Improved testability.
 
 ## Installation
 ```
@@ -222,6 +223,23 @@ export class UserStore {
 }
 ```
 
+## How to test
+
+To test components where interact with the state using a proxy, you have to create the proxy for each test, and clear the proxy cache, to keep the state clean in between tests.
+
+If you are using jest, you could clear the proxy cache in the afterEach callback.
+```js
+describe('my test suite', () => {
+	...
+	afterEach(() => {
+		UserStore.ClearProxyCache(UserStore)
+	})
+	...
+})
+```
+
+To ensure your proxy is recreated for each test, the easiest way is to create the proxy inside the [component](#ok-so-what-about-vue-components). If not you could pass the proxy into the component using [provide/inject](https://vuejs.org/v2/api/#provide-inject), or mock the proxy if you are importing it from another file ie. like a [vuex manager](#vuex-manager).
+
 ## A note on Vuex Actions?
 Vuex Actions comes in two modes. A `mutate` mode and a `raw` mode. Both can be very useful.\
 For most of your use cases the `mutate` mode is all you'll need. The `raw` mode can be especially useful when you need access to `rootState` and `rootGetters`.\
@@ -271,4 +289,4 @@ Mutated Actions can access state, getters, mutations and other actions with the 
 Raw Actions on the other hand gives you access to `rootState` and `rootGetters`. The only limitation to this appoach however is that **you can't and shouldn't use the `this` keyword.** Instead you should get back the context object with the `getRawActionContext` function and then treat the function body like a regular vuex action. 
 
 All actions MUST return a promise.\
-All actions proxies are totally type safe and can still be used normally in Vue components whether mutatated or raw.
+All actions proxies are totally type safe and can still be used normally in Vue components whether mutated or raw.
