@@ -1,6 +1,9 @@
 # Vuex Class Component
 A Type Safe Solution for Vuex Modules using ES6 Classes and ES7 Decorators that works out of the box for TypeScript and JavaScript.
 
+## ATTENTION! - New API Proposal (No Decorators)
+https://github.com/michaelolof/vuex-class-component/issues/27
+
 ## Goals
 * Ensure your Codebase is type safe when writing Vuex Modules.
 * Provide proxies for getters, mutations and actions in a type safe way
