@@ -81,6 +81,11 @@ class UserStore extends VuexModule {
 	get valueFrom$store() {
 		return this.$store.state.globalValue;
 	}
+
+	get getValueFromGetter() {
+		this.fullName //?
+		return 'Fullname is: ' + this.fullName
+	}
 }
 
 describe('CreateProxy', () => {
@@ -218,5 +223,12 @@ describe('CreateProxy', () => {
 
 		expect(user.valueFrom$store).toEqual('someValue accessible from store')
 		await expect(user.access$store()).resolves.toEqual('someValue accessible from store')
+	})
+
+	it('should be able to access other getters inside a getter', () => {
+		const user = UserStore.CreateProxy(store, UserStore)
+
+		expect(user.fullName).toEqual('Michael Olofinjana')
+		expect(user.getValueFromGetter).toEqual('Fullname is: Michael Olofinjana')
 	})
 })

@@ -14,7 +14,7 @@ export declare const _submodule = "__submodule__";
 export declare const _module = "__module__";
 export declare type MutationFunction = (state: any, payload: any) => void;
 export declare type ActionFunction = (context: any, payload: any) => Promise<any>;
-export declare type GetterFunction = (state: any) => any;
+export declare type GetterFunction = (state: any, getters: any) => any;
 export interface VuexMap {
     type: "state";
     value: string;

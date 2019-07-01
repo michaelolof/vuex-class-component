@@ -16,7 +16,7 @@ export const _module = "__module__";
 
 export type MutationFunction = (state:any, payload:any) => void;
 export type ActionFunction = (context:any, payload:any) => Promise<any>;
-export type GetterFunction = (state:any) => any;
+export type GetterFunction = (state:any, getters:any) => any;
 export interface VuexMap {
   type:"state";
   value:string;
