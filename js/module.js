@@ -147,9 +147,20 @@ export function Module(_a) {
         var _loop_1 = function (field) {
             var getterField = fields[field].get;
             if (getterField) {
-                var func = function (state) {
+                var func = function (state, getters) {
                     return function ($store) {
-                        return getterField.call(__assign({}, state, { $store: $store }));
+                        var getterThis = __assign({}, state, { $store: $store });
+                        Object.entries(Object.getOwnPropertyDescriptors(getters))
+                            .forEach(function (_a) {
+                            var getter = _a[0], descriptor = _a[1];
+                            if (getter === field)
+                                return;
+                            if (descriptor.get === undefined)
+                                return;
+                            var getterFunc = descriptor.get();
+                            Object.defineProperty(getterThis, getter, __assign({}, descriptor, { get: function () { return getterFunc($store); } }));
+                        });
+                        return getterField.call(getterThis);
                     };
                 };
                 _module.prototype[_getters][field] = func;

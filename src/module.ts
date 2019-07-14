@@ -199,9 +199,20 @@ export function Module({ namespacedPath = "", target = "core" as VuexModuleTarge
     for (let field in fields) {
       const getterField = fields[ field ].get;
       if ( getterField ) {
-        const func = function (state: any) {
+        const func = function (state: any, getters) {
           return function ($store: Store<any>) {
-            return getterField.call({...state, $store} );
+            const getterThis = {...state, $store}
+            Object.entries(Object.getOwnPropertyDescriptors(getters))
+                .forEach(([getter, descriptor]) => {
+                  if (getter === field) return
+                  if (descriptor.get === undefined) return
+                  const getterFunc = descriptor.get()
+                  Object.defineProperty(getterThis, getter, {
+                    ...descriptor,
+                    get: () => getterFunc($store)
+                  })
+                })
+            return getterField.call(getterThis);
           }
         }
         _module.prototype[_getters][field] = func;
