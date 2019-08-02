@@ -1,5 +1,6 @@
-import { VuexModule, DictionaryField, SubModuleType, Map, VuexObject } from "./interfaces";
-import { extractVuexModule, toCamelCase } from "./module";
+import { VuexModule, SubModuleType, Map, VuexObject } from "./interfaces";
+import { extractVuexModule } from "./module";
+import { toCamelCase } from "./utils"
 
 export function isFieldASubModule( instance :VuexModule & Map, field :string ) {
   return( 

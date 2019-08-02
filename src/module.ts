@@ -1,26 +1,35 @@
 //@ts-ignore
 import getDescriptors from "object.getownpropertydescriptors";
-import { VuexModuleOptions, VuexModuleConstructor, DictionaryField, VuexModule, VuexObject, Map, FieldPayload } from "./interfaces";
+import { VuexModuleOptions, VuexModuleConstructor, DictionaryField, VuexModule, VuexObject, Map } from "./interfaces";
 import { isFieldASubModule, extractVuexSubModule } from "./submodule";
 import { createLocalProxy } from './proxy';
+import { toCamelCase } from "./utils";
+import { internalAction } from "./actions";
+import { internalMutator } from "./mutations";
+import { internalGetter } from "./getters";
 
-export function initializeStore( options ?:VuexModuleOptions ) {
+
+export function createModule( options ?:VuexModuleOptions ) {
 
   /**
    * We do it like this because we don't want intelissense to pick up the
    * options variable as it is an internal variable.
    */
   (VuexModule as VuexModuleConstructor).prototype.__options__ = options;
+  (VuexModule as VuexModuleConstructor).prototype.__namespacedPath__ = "";
   (VuexModule as VuexModuleConstructor).prototype.__vuex_module_cache__ = undefined;
-  (VuexModule as VuexModuleConstructor).prototype.__vuex_module_tree_stash__ = {};
   (VuexModule as VuexModuleConstructor).prototype.__vuex_proxy_cache__ = undefined;
   (VuexModule as VuexModuleConstructor).prototype.__vuex_local_proxy_cache__ = undefined;
-  (VuexModule as VuexModuleConstructor).prototype.__context_store__ = {};
   (VuexModule as VuexModuleConstructor).prototype.__submodules_cache__ = {};
+  (VuexModule as VuexModuleConstructor).prototype.__context_store__ = {};
   (VuexModule as VuexModuleConstructor).prototype.__mutations_cache__ = {
     __explicit_mutations__: {},
     __setter_mutations__: {}
   };
+  (VuexModule as VuexModuleConstructor).prototype.__explicit_mutations_names__ = [];
+  (VuexModule as VuexModuleConstructor).prototype.__actions__ = [];
+  (VuexModule as VuexModuleConstructor).prototype.__watch__ = {};
+  (VuexModule as VuexModuleConstructor).prototype.__explicit_getter_names__ = [];
 
   return VuexModule;
 
@@ -41,15 +50,13 @@ export function extractVuexModule( cls :typeof VuexModule ) {
   const fromPrototype = extractModulesFromPrototype( VuexClass );
 
   // Cache explicit mutations and getter mutations.
-  VuexClass.prototype.__mutations_cache__.__explicit_mutations__ = fromInstance.mutations;
-  VuexClass.prototype.__mutations_cache__.__setter_mutations__ = fromPrototype.mutations;
-
-  console.log( "Vuex Stash", VuexClass.name ,VuexClass.prototype.__vuex_module_tree_stash__ )
+  VuexClass.prototype.__mutations_cache__.__explicit_mutations__ = fromPrototype.mutations.explicitMutations;
+  VuexClass.prototype.__mutations_cache__.__setter_mutations__ = fromPrototype.mutations.setterMutations;
 
   const vuexModule :VuexObject = {
-    namespaced: VuexClass.prototype.__options__ ? VuexClass.prototype.__options__.namespaced : false,
+    namespaced: VuexClass.prototype.__options__ && VuexClass.prototype.__options__.namespaced ? true : false,
     state: fromInstance.state,
-    mutations: { ...fromInstance.mutations, ...fromPrototype.mutations, __internal_mutator__: internalMutator },
+    mutations: { ...fromPrototype.mutations.explicitMutations, ...fromPrototype.mutations.setterMutations, __internal_mutator__: internalMutator },
     getters: { ...fromPrototype.getters, __internal_getter__: internalGetter },
     actions: { ...fromPrototype.actions, __internal_action__: internalAction },
     modules: fromInstance.submodules,
@@ -57,15 +64,27 @@ export function extractVuexModule( cls :typeof VuexModule ) {
 
   // Cache the vuex module on the class.
   VuexClass.prototype.__vuex_module_cache__ = vuexModule;
-  const className = toCamelCase( VuexClass.name );
+  const className = getNamespacedPath( VuexClass );
+
   return { 
     [ className ]: vuexModule
   } as any
 
-} 
+}
 
-export function toCamelCase(str :string){
-  return str[ 0 ].toLocaleLowerCase() + str.substring( 1 );
+function getNamespacedPath( cls :VuexModuleConstructor ) {
+  
+  if( cls.prototype.__options__ && cls.prototype.__options__.namespaced ) {
+    switch( cls.prototype.__options__.namespaced ) {
+      case true: 
+        cls.prototype.__namespacedPath__ = toCamelCase( cls.name );
+        break;
+      default:
+        cls.prototype.__namespacedPath__ = cls.prototype.__options__.namespaced.split("/")[0]
+    }
+  }
+
+  return cls.prototype.__namespacedPath__;
 }
 
 function extractModulesFromInstance( cls :VuexModuleConstructor ) {
@@ -77,15 +96,9 @@ function extractModulesFromInstance( cls :VuexModuleConstructor ) {
   const submodules :Map = {};
   const submodulesCache = cls.prototype.__submodules_cache__;
   const moduleOptions = cls.prototype.__options__ || {};
-  const vuexModuleStash = cls.prototype.__vuex_module_tree_stash__;
 
   for( let field of classFields ) {
-    /**
-     * Fields defined in a class can either be states or sub modules.
-     * First we check if the field is a submodule, if not then it 
-     * definitely must be a state.
-     */  
-
+    
     // Check if field is a submodule.
     const fieldIsSubModule = isFieldASubModule( instance, field  );
     if( fieldIsSubModule ) {
@@ -96,34 +109,25 @@ function extractModulesFromInstance( cls :VuexModuleConstructor ) {
       const submodule = extractVuexSubModule( instance, field );
             
       submodules[ field ] = submodule;
-      
-      // Also stash the submodule in the vuex module stash.
-      // vuexModuleStash[ field ] = { type: "submodule", value: submodule }
-    
+          
       continue;
     }
 
-    // Check if field is an explicit mutation.
-    if( typeof instance[ field ] === "function" ) {
-      const mutation = ( state :any, payload :any ) => instance[ field ].call( state, payload );
-      
-      // Stash mutation in vuex module stash.
-      vuexModuleStash[ field ] = { type: "explicit-mutation", value: mutation };
-      
-      mutations[ field ] = mutation;
-      continue;
-    }
+    // // Check if field is an explicit mutation.
+    // if( typeof instance[ field ] === "function" ) {
+    //   const mutation = ( state :any, payload :any ) => instance[ field ].call( state, payload );
+            
+    //   mutations[ field ] = mutation;
 
+    //   continue;
+    // }
 
-    console.log( "State field:", field, "Class :", cls.name, "constructor:", cls.prototype[ "constructor" ] );
 
     // If field is not a submodule, then it must be a state.
     // Check if the vuex module is targeting nuxt. if not define state as normal.
     if( moduleOptions.target === "nuxt" ) state[ field ] = () => instance[ field ];
     else state[ field ] = instance[ field ];
-    // Stash state in vuex module stash.
-    vuexModuleStash[ field ] = { type: "state", value: instance[ field ] };
-
+    
   }
   
   return {
@@ -135,12 +139,14 @@ function extractModulesFromInstance( cls :VuexModuleConstructor ) {
 
 function extractModulesFromPrototype( cls :VuexModuleConstructor ) {
 
+  const setterMutations :Record<DictionaryField, any> = {};
+  const explicitMutations :Record<DictionaryField, any> = {};
   const actions :Record<DictionaryField, any> = {};
-  const mutations :Record<DictionaryField, any>= {};
   const getters :Record<DictionaryField, any> = {};
   const descriptors :PropertyDescriptorMap = getDescriptors( cls.prototype );
-  const vuexModuleStash = cls.prototype.__vuex_module_tree_stash__;
   const gettersList :string[] = Object.keys( descriptors ).filter( field => descriptors[ field ].get );
+  const explicitMutationNames :string[] = cls.prototype.__explicit_mutations_names__;
+  const actionNames = cls.prototype.__actions__;
 
   for( let field in descriptors ) {
     
@@ -154,13 +160,14 @@ function extractModulesFromPrototype( cls :VuexModuleConstructor ) {
       field === "__explicit_mutations__"  ||
       field === "__getter_mutations__"
     );
-
     if( fieldIsInternal ) continue;
 
     const descriptor = descriptors[ field ];
 
-    // If proptotype field is a function, extract as an action.
-    if( typeof descriptor.value === "function" ) {
+    const actionType = (typeof descriptor.value === "function") && actionNames.find( action => action.__name__ === field );    
+    // If prototype field is an mutate action
+    if( actionType && actionType.__type__ === "mutate" ) {
+
       const func = descriptor.value as Function
       
       const action = function( context :any, payload :any ) {
@@ -169,10 +176,31 @@ function extractModulesFromPrototype( cls :VuexModuleConstructor ) {
         return func.call( proxy, payload )
       }
 
-      // Stash action in vuex module stash
-      vuexModuleStash[ field ] = { type: "action", value: action };
+      actions[ field ] = action;
+
+      continue;
+    }
+
+    // if prototype field is a raw action
+    if( actionType && actionType.__type__ === "raw" ) {
+      const func = descriptor.value as Function;
+
+      const action = ( context :any, payload :any ) => func.call( context, payload );
 
       actions[ field ] = action;
+
+      continue;
+    }
+
+    // If prototype field is an explicit mutation
+    const fieldIsExplicitMutation = ( 
+      typeof descriptor.value === "function" && 
+      explicitMutationNames.indexOf( field ) > -1
+    );
+    if( fieldIsExplicitMutation ) {
+      const mutation = ( state :any, payload :any ) => descriptor.value.call( state, payload );
+            
+      explicitMutations[ field ] = mutation;
 
       continue;
     }
@@ -183,10 +211,6 @@ function extractModulesFromPrototype( cls :VuexModuleConstructor ) {
         const proxy = createLocalProxy( cls, context )
         return descriptor.get!.call( proxy )
       }
-
-      // Cache getter in vuex store.
-      if( vuexModuleStash[ field ] ) vuexModuleStash[ field ].value.getter = getter;
-      else vuexModuleStash[ field ] = { type: "getter", value: { getter, }}
       
       getters[ field ] = getter;
     }
@@ -221,75 +245,21 @@ function extractModulesFromPrototype( cls :VuexModuleConstructor ) {
         )  
       }
 
-      // stash the mutation in the vuex module stash
-      if( vuexModuleStash[ field ] ) vuexModuleStash[ field ].value.mutation = mutation;
-      else vuexModuleStash[ field ] = { type: "getter", value: { mutation } }
-
-      mutations[ field ] = mutation;
+      setterMutations[ field ] = mutation;
     }
+
+    // Stash getters list. To be used later when creating $watch functionality.
+    cls.prototype.__explicit_getter_names__ = gettersList;
 
   }
 
   return {
     actions,
-    mutations,
+    mutations: { 
+      explicitMutations,
+      setterMutations,
+    },
     getters
   }
 
 }
-
-const internalMutator = ( state :Map, { field, payload } :FieldPayload ) => {
-  const fields = field.split( "." );
-  switch( fields.length ) {
-    case 1:
-      state[ fields[0] ] = payload;
-      break;
-    case 2:
-      state[ fields[0] ][ fields[1] ] = payload;
-      break;
-    case 3:
-      state[ fields[0] ][ fields[1] ][ fields[2] ] = payload;
-      break;
-    case 4:
-      state[ fields[0] ][ fields[1] ][ fields[2] ][ fields[3] ] = payload;
-      break;
-    case 5:
-      state[ fields[0] ][ fields[1] ][ fields[2] ][ fields[3] ][ fields[4] ] = payload;
-      break;
-    case 6:
-      state[ fields[0] ][ fields[1] ][ fields[2] ][ fields[3] ][ fields[4] ][ fields[ 5] ] = payload;
-      break;
-    case 7:
-      state[ fields[0] ][ fields[1] ][ fields[2] ][ fields[3] ][ fields[4] ][ fields[ 5] ][ fields[6] ] = payload;
-      break;
-  }
-}
-
-const internalGetter = ( state :any, context :any ) => ( field :string ) => {
-  const fields = field.split( "." );
-  switch( fields.length ) {
-    case 1: 
-      return state[ fields[0] ];
-      
-    case 2:
-      return state[ fields[0] ][ fields[1] ];
-      
-    case 3:
-      return state[ fields[0] ][ fields[1] ][ fields[2] ];
-      
-    case 4:
-      return state[ fields[0] ][ fields[1] ][ fields[2] ][ fields[3] ];
-      
-    case 5:
-      return state[ fields[0] ][ fields[1] ][ fields[2] ][ fields[3] ][ fields[4] ];
-      
-    case 6:
-      return state[ fields[0] ][ fields[1] ][ fields[2] ][ fields[3] ][ fields[4] ][ fields[ 5] ];
-      
-    case 7:
-      return state[ fields[0] ][ fields[1] ][ fields[2] ][ fields[3] ][ fields[4] ][ fields[ 5] ][ fields[6] ];
-      
-  }
-}
-
-const internalAction = ( state :any, context :any ) => undefined
