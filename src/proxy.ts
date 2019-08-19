@@ -1,14 +1,19 @@
 import { extractVuexModule } from "./module";
 import { VuexModuleConstructor, Map, VuexModule, ProxyWatchers } from "./interfaces";
 
-export function createProxy<T extends typeof VuexModule>( cls :T, $store :any ) :ProxyWatchers & InstanceType<T> {
+
+export function clearProxyCache<T extends typeof VuexModule>( cls :T ) {
+
+}
+
+export function createProxy<T extends typeof VuexModule>( $store :any, cls :T ) :ProxyWatchers & InstanceType<T> {
   //@ts-ignore
   const VuexClass = cls as VuexModuleConstructor;
   
   // Check cache and return from cache if defined.
-  if( VuexClass.prototype.__vuex_proxy_cache__ ) {
-    return VuexClass.prototype.__vuex_proxy_cache__ as InstanceType<T> & ProxyWatchers;
-  }
+  // if( VuexClass.prototype.__vuex_proxy_cache__ ) {
+  //   return VuexClass.prototype.__vuex_proxy_cache__ as InstanceType<T> & ProxyWatchers;
+  // }
   
   const namespacedPath = VuexClass.prototype.__namespacedPath__ ? VuexClass.prototype.__namespacedPath__ + "/" : "";
 
@@ -63,6 +68,7 @@ export function createProxy<T extends typeof VuexModule>( cls :T, $store :any ) 
 
     if( typeof callback === "function" ) {
       return $store.subscribeAction(( action :any ) => {
+        //@ts-ignore
         if( action.type === namespacedPath + field ) callback( action.payload )
       })
     }
@@ -101,12 +107,13 @@ export function createLocalProxy<T extends typeof VuexModule>( cls :T, $store :a
 }
 
 export function _createProxy<T>(cls: T, $store: any, namespacedPath = "") {
+
   //@ts-ignore
   const VuexClass = cls as VuexModuleConstructor;
   const proxy = {};
-  const { state, mutations, actions, getters, modules } = extractVuexModule( VuexClass );
+  const { state, mutations, actions, getters, modules } = extractVuexModule( VuexClass )[ VuexClass.prototype.__namespacedPath__ ];
 
-  createGettersAndMutationProxyFromState({ cls: VuexClass, proxy, state, $store, namespacedPath });
+  createGettersAndMutationProxyFromState({ cls: VuexClass, proxy, state, $store, namespacedPath, maxDepth: 7 });
   createExplicitMutationsProxy({ cls: VuexClass, proxy, $store, namespacedPath });
   createGettersAndGetterMutationsProxy({ cls: VuexClass, mutations, getters, proxy, $store, namespacedPath });
   createActionProxy({ actions, proxy, $store, namespacedPath });
@@ -168,13 +175,6 @@ function createLocalSubscriberAction( cls :VuexModuleConstructor, $store :Map, n
     }
 
   }
-
-
-  // function getSubscriptionStates() {
-    
-  //   const before = 
-    
-  // }
 
 }
 
@@ -259,12 +259,12 @@ function createSubModuleProxy( $store :Map, cls:VuexModuleConstructor, proxy :Ma
 
   for( let field in modules ) {
     const subModuleClass = cls.prototype.__submodules_cache__[ field ];
-    proxy[ field ] = createProxy( subModuleClass, $store );
+    proxy[ field ] = createProxy( $store, subModuleClass );
   }
 
 }
 
-function createGettersAndMutationProxyFromState({ cls, proxy, state, $store, namespacedPath = "", currentField = "" }: { cls: VuexModuleConstructor, proxy: Map; state: Map; $store: any; namespacedPath?: string; currentField?: string; }) {
+function createGettersAndMutationProxyFromState({ cls, proxy, state, $store, namespacedPath = "", currentField = "", maxDepth = 7 }: { cls: VuexModuleConstructor, proxy: Map; state: Map; $store: any; namespacedPath?: string; currentField?: string; maxDepth: number}) {
   /**
    * 1. Go through all fields in the object and check the values of those fields. 
    *  
@@ -279,12 +279,12 @@ function createGettersAndMutationProxyFromState({ cls, proxy, state, $store, nam
    */
   for (let field in state) {
 
-    let value = state[field];
+    let value = state[ field ];
 
     if (currentField.length && !currentField.endsWith(".")) currentField += ".";
     const path = currentField + field;
 
-    if (typeof value !== "object") {
+    if ( maxDepth === 0 || typeof value !== "object") {
       Object.defineProperty(proxy, field, {
         get: () => { 
           // When creating local proxies getters doesn't exist on that context, so we have to account
@@ -305,13 +305,15 @@ function createGettersAndMutationProxyFromState({ cls, proxy, state, $store, nam
       continue;
     }
 
-    proxy[field] = {};
+    proxy[ field ] = {};
+
     createGettersAndMutationProxyFromState({ 
       cls, proxy: 
       proxy[field], 
       state: value, 
       $store, namespacedPath, 
-      currentField: currentField + field 
+      currentField: currentField + field,
+      maxDepth: maxDepth - 1, 
     });
   
   }
@@ -332,23 +334,25 @@ function createGettersAndGetterMutationsProxy({ cls, getters, mutations, proxy, 
   const getterMutations = Object.keys( cls.prototype.__mutations_cache__.__setter_mutations__ );
   // If there are defined setter mutations that do not have a corresponding getter, 
   // throw an error. 
-  if( $store.__internal_getter__ ) {
+  if( $store && $store.__internal_getter__ ) {
     $store.__internal_mutator__ = mutations.__internal_mutator__;
   }
 
   for( let field in getters ) {
 
+    if( $store === undefined ) continue;
+
     const fieldHasGetterAndMutation = getterMutations.indexOf( field ) > -1;
     if( fieldHasGetterAndMutation ) {
       
       Object.defineProperty( proxy, field, {
-        get: () => { 
+        get: () => {
           if( $store.getters ) return $store.getters[ namespacedPath + field ]
           else return $store[ namespacedPath + field ];
         },
         set: ( payload :any ) => $store.commit( namespacedPath + field, payload ),
       })
-
+      
       continue;
     }
     
@@ -365,7 +369,10 @@ function createGettersAndGetterMutationsProxy({ cls, getters, mutations, proxy, 
 
 function createActionProxy({ actions, proxy, $store, namespacedPath } :ActionProxyCreator) {
   for( let field in actions ) {
-    proxy[ field ] = ( payload :any ) => $store.dispatch( namespacedPath + field, payload );
+    if( $store === undefined ) continue;
+    proxy[ field ] = function( payload :any )  { 
+      return $store.dispatch( namespacedPath + field, payload );
+    }
   }
 }
 

@@ -1,3 +1,5 @@
+import { Store } from "vuex";
+
 export interface VuexModuleOptions {
   /*
    * Takes a boolean or a namespacedPath.
@@ -13,6 +15,11 @@ export interface VuexModuleOptions {
   enableLocalActionSubscriptions ?:boolean | string;
 }
 
+export interface VuexModuleAddons {
+  $store :Store<any>
+}
+
+export interface VuexModule extends VuexModuleAddons {}
 export class VuexModule {}
 
 export type VuexModuleConstructor = typeof VuexModule & VuexModuleInternals;

@@ -1,6 +1,6 @@
 export { extractVuexModule, createModule } from "./module";
 export { createSubModule } from "./submodule";
-export { createProxy } from "./proxy"
+export { createProxy, clearProxyCache } from "./proxy"
 export { action, getRawActionContext } from "./actions";
 export { mutation } from "./mutations";
 

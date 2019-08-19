@@ -41,9 +41,9 @@ export function extractVuexModule( cls :typeof VuexModule ) {
 
   // Check if module has been cached, 
   // and just return the cached version.
-  if( VuexClass.prototype.__vuex_module_cache__ ) {
-    return VuexClass.prototype.__vuex_module_cache__;
-  }
+  // if( VuexClass.prototype.__vuex_module_cache__ ) {
+  //   return VuexClass.prototype.__vuex_module_cache__;
+  // }
 
   // If not extract vuex module from class.
   const fromInstance = extractModulesFromInstance( VuexClass );
@@ -72,7 +72,7 @@ export function extractVuexModule( cls :typeof VuexModule ) {
 
 }
 
-function getNamespacedPath( cls :VuexModuleConstructor ) {
+export function getNamespacedPath( cls :VuexModuleConstructor ) {
   
   if( cls.prototype.__options__ && cls.prototype.__options__.namespaced ) {
     switch( cls.prototype.__options__.namespaced ) {
@@ -113,27 +113,16 @@ function extractModulesFromInstance( cls :VuexModuleConstructor ) {
       continue;
     }
 
-    // // Check if field is an explicit mutation.
-    // if( typeof instance[ field ] === "function" ) {
-    //   const mutation = ( state :any, payload :any ) => instance[ field ].call( state, payload );
-            
-    //   mutations[ field ] = mutation;
-
-    //   continue;
-    // }
-
-
     // If field is not a submodule, then it must be a state.
-    // Check if the vuex module is targeting nuxt. if not define state as normal.
-    if( moduleOptions.target === "nuxt" ) state[ field ] = () => instance[ field ];
-    else state[ field ] = instance[ field ];
+    state[ field ] = instance[ field ];
     
   }
   
   return {
     submodules,
     mutations,
-    state,
+    // Check if the vuex module is targeting nuxt return state as function. if not define state as normal.    
+    state: moduleOptions.target === "nuxt" ? () => state : state,
   }
 }
 
@@ -173,6 +162,11 @@ function extractModulesFromPrototype( cls :VuexModuleConstructor ) {
       const action = function( context :any, payload :any ) {
         cls.prototype.__context_store__ = context;
         const proxy = createLocalProxy( cls, context );
+        
+        if( proxy[ "$store" ] === undefined ) { 
+          Object.defineProperty( proxy, "$store", { value: context });
+        }
+
         return func.call( proxy, payload )
       }
 

@@ -39,18 +39,18 @@ function handleMutateActionMode(target:VuexModule, key:string, descriptor:Action
 
   initializeActionsCache( target );
   
-  (target as VuexModuleInternalsPrototype).__actions__.push({
+  (target as VuexModule & VuexModuleInternalsPrototype).__actions__.push({
     __name__: key,
     __type__: "mutate",
   })
 
 }
 
-function handleRawActionMode(target:any, key:string, descriptor:ActionDescriptor) {
+function handleRawActionMode(target:VuexModule, key:string, descriptor:ActionDescriptor) {
   
   initializeActionsCache( target );
   
-  (target as VuexModuleInternalsPrototype).__actions__.push({
+  (target as VuexModule & VuexModuleInternalsPrototype).__actions__.push({
     __name__: key,
     __type__: "raw",
   });

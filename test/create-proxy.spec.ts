@@ -2,10 +2,7 @@
 import Vuex, {Store} from 'vuex'
 // @ts-ignore
 import { createLocalVue } from '@vue/test-utils'
-import { Module, VuexModule } from '../src/module'
-import { getter } from '../src/getters'
-import { mutation } from '../src/mutations'
-import { action } from '../src/actions'
+import { Module, VuexModule, getter, mutation, action } from '../src'
 
 
 interface Name {
@@ -14,7 +11,7 @@ interface Name {
 }
 
 @Module({ namespacedPath: 'user/settings/' })
-class UserSettings extends VuexModule{
+class UserSettings extends VuexModule {
 	@getter cookieConsent = false
 
 	@mutation changeConsent(consent: boolean) {
@@ -25,7 +22,7 @@ class UserSettings extends VuexModule{
 
 @Module({ namespacedPath: 'user/' })
 class UserStore extends VuexModule {
-	settings = UserSettings.CreateSubModule(UserSettings)
+	// settings = UserSettings.CreateSubModule(UserSettings)
 
 	firstname = 'Michael'
 	lastname = 'Olofinjana'
@@ -52,8 +49,10 @@ class UserStore extends VuexModule {
 }
 
 describe('CreateProxy', () => {
+	
 	let store;
 	let localVue;
+
 	beforeEach(() => {
 		localVue = createLocalVue()
 		localVue.use(Vuex)
@@ -65,7 +64,7 @@ describe('CreateProxy', () => {
 	})
 
 	it('should proxy getters', () => {
-		const user = UserStore.CreateProxy(store, UserStore)
+		const user = UserStore.CreateProxy(store, UserStore);
 
 		expect(user.fullName).toEqual('Michael Olofinjana')
 		expect(user.specialty).toEqual('JavaScript')
@@ -79,7 +78,8 @@ describe('CreateProxy', () => {
 		expect(user.lastname).toEqual('Olofinjana')
 	})
 
-	it('should proxy actions', async () => {
+	it.only('should proxy actions', async () => {
+
 		const user = UserStore.CreateProxy(store, UserStore)
 
 		await user.doAnotherAsyncStuff('Something')
@@ -100,4 +100,5 @@ describe('CreateProxy', () => {
 		expect(user.firstname).toEqual('Ola')
 		expect(user.lastname).toEqual('Nordmann')
 	})
+
 })
