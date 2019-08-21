@@ -41,9 +41,9 @@ export function extractVuexModule( cls :typeof VuexModule ) {
 
   // Check if module has been cached, 
   // and just return the cached version.
-  // if( VuexClass.prototype.__vuex_module_cache__ ) {
-  //   return VuexClass.prototype.__vuex_module_cache__;
-  // }
+  if( VuexClass.prototype.__vuex_module_cache__ ) {
+    return VuexClass.prototype.__vuex_module_cache__;
+  }
 
   // If not extract vuex module from class.
   const fromInstance = extractModulesFromInstance( VuexClass );
@@ -63,12 +63,12 @@ export function extractVuexModule( cls :typeof VuexModule ) {
   };
 
   // Cache the vuex module on the class.
-  VuexClass.prototype.__vuex_module_cache__ = vuexModule;
   const className = getNamespacedPath( VuexClass );
+  
+  const rtn = { [ className ]: vuexModule }
+  VuexClass.prototype.__vuex_module_cache__ = rtn;
 
-  return { 
-    [ className ]: vuexModule
-  } as any
+  return rtn;
 
 }
 

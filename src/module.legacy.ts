@@ -40,13 +40,16 @@ export interface LegacyVuexModule extends VuexModuleAddons {}
 export class LegacyVuexModule {
 
   static ExtractVuexModule( cls :typeof VuexModule ) {
-    const vxmodule = extractVuexModule( cls );
-    //@ts-ignore
-    return vxmodule[ cls.prototype.__namespacedPath__ ]
+    
+    const VuexClass = cls as VuexModule & VuexModuleConstructor;
+    
+    const vxmodule = extractVuexModule( VuexClass );
+
+    return vxmodule[ VuexClass.prototype.__namespacedPath__ ];
   }
 
   static CreateProxy<T extends typeof VuexModule>( $store :Map, cls :T ) {
-    return createProxy( $store, cls )
+    return createProxy( $store, cls );
   }
 
   static CreateSubModule( cls :typeof VuexModule ) {

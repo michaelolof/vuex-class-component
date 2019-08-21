@@ -31,7 +31,7 @@ export interface VuexModuleInternals {
 export interface VuexModuleInternalsPrototype {
   __options__ :VuexModuleOptions | undefined;
   __namespacedPath__ :string;
-  __vuex_module_cache__ :undefined | VuexObject;
+  __vuex_module_cache__ :undefined | { [ path: string ]: VuexObject };
   __vuex_proxy_cache__ :{} | undefined;
   __vuex_local_proxy_cache__ :{} | undefined;
   __submodules_cache__: Map;
@@ -47,6 +47,7 @@ export interface VuexModuleInternalsPrototype {
     __type__ :ActionType,
   }[],
   __watch__ :Map;
+  __store_cache__ :any;
 }
 
 export interface SubModuleType<T> {

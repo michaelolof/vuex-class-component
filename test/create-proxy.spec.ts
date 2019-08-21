@@ -22,7 +22,8 @@ class UserSettings extends VuexModule {
 
 @Module({ namespacedPath: 'user/' })
 class UserStore extends VuexModule {
-	// settings = UserSettings.CreateSubModule(UserSettings)
+
+	settings = UserSettings.CreateSubModule(UserSettings)
 
 	firstname = 'Michael'
 	lastname = 'Olofinjana'
@@ -78,7 +79,7 @@ describe('CreateProxy', () => {
 		expect(user.lastname).toEqual('Olofinjana')
 	})
 
-	it.only('should proxy actions', async () => {
+	it('should proxy actions', async () => {
 
 		const user = UserStore.CreateProxy(store, UserStore)
 
