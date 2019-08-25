@@ -1,5 +1,6 @@
 import { extractVuexModule } from "./module";
 import { VuexModuleConstructor, Map, VuexModule, ProxyWatchers } from "./interfaces";
+import { getClassPath, toCamelCase } from "./utils";
 
 
 export function clearProxyCache<T extends typeof VuexModule>( cls :T ) {
@@ -114,7 +115,9 @@ export function _createProxy<T>(cls: T, $store: any, namespacedPath = "") {
   //@ts-ignore
   const VuexClass = cls as VuexModuleConstructor;
   const proxy = {};
-  const { state, mutations, actions, getters, modules } = extractVuexModule( VuexClass )[ VuexClass.prototype.__namespacedPath__ ];
+  
+  const classPath = getClassPath( VuexClass.prototype.__namespacedPath__ ) || toCamelCase( VuexClass.name );
+  const { state, mutations, actions, getters, modules } = extractVuexModule( VuexClass )[ classPath ];
 
   createGettersAndMutationProxyFromState({ cls: VuexClass, proxy, state, $store, namespacedPath, maxDepth: 7 });
   createExplicitMutationsProxy( VuexClass, proxy, $store, namespacedPath );
@@ -261,7 +264,8 @@ function createLocalWatchers( cls :VuexModuleConstructor, $store :Map, namespace
 function createSubModuleProxy( $store :Map, cls:VuexModuleConstructor, proxy :Map, modules :Map ) {
   const store = cls.prototype.__store_cache__ || $store;
   for( let field in modules ) {
-    const subModuleClass = cls.prototype.__submodules_cache__[ field ];
+    const subModuleClass = cls.prototype.__submodules_cache__[ field ] as VuexModuleConstructor;
+    subModuleClass.prototype.__namespacedPath__ = cls.prototype.__namespacedPath__ + "/" + subModuleClass.prototype.__namespacedPath__;
     proxy[ field ] = createProxy( store, subModuleClass );
   }
 
@@ -365,6 +369,8 @@ function createGettersAndGetterMutationsProxy({ cls, getters, mutations, proxy, 
     }
     
     // The field has only a getter.
+    if( proxy[ field ] ) continue;
+    
     Object.defineProperty( proxy, field, {
       get: () => { 
         if( $store.getters ) return $store.getters[ namespacedPath + field ];
@@ -391,7 +397,6 @@ function runSetterCheck( cls :VuexModuleConstructor, getters :Map ) {
   // if there are setters defined that are not in getters.
   // throw an error.
   const setterMutations = cls.prototype.__mutations_cache__.__setter_mutations__;
-  console.log( "Setter Mutations", cls.name, setterMutations );
   for( let field in setterMutations ) {
     const setterIsNotInGetters = Object.keys( getters ).indexOf( field ) < 0;
     if( setterIsNotInGetters ) {

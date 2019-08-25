@@ -30,6 +30,7 @@ export function createModule( options ?:VuexModuleOptions ) {
   (VuexModule as VuexModuleConstructor).prototype.__actions__ = [];
   (VuexModule as VuexModuleConstructor).prototype.__watch__ = {};
   (VuexModule as VuexModuleConstructor).prototype.__explicit_getter_names__ = [];
+  (VuexModule as VuexModuleConstructor).prototype.__decorator_getter_names__ = [];
 
   return VuexModule;
 
@@ -57,17 +58,18 @@ export function extractVuexModule( cls :typeof VuexModule ) {
     namespaced: VuexClass.prototype.__options__ && VuexClass.prototype.__options__.namespaced ? true : false,
     state: fromInstance.state,
     mutations: { ...fromPrototype.mutations.explicitMutations, ...fromPrototype.mutations.setterMutations, __internal_mutator__: internalMutator },
-    getters: { ...fromPrototype.getters, __internal_getter__: internalGetter },
+    getters: { ...fromPrototype.getters, ...fromInstance.getters , __internal_getter__: internalGetter },
     actions: { ...fromPrototype.actions, __internal_action__: internalAction },
     modules: fromInstance.submodules,
   };
 
-  // Cache the vuex module on the class.
-  const className = getNamespacedPath( VuexClass );
   
-  const rtn = { [ className ]: vuexModule }
-  VuexClass.prototype.__vuex_module_cache__ = rtn;
+  // Cache the vuex module on the class.
+  const path = getNamespacedPath( VuexClass ) || toCamelCase( VuexClass.name );
 
+  const rtn = { [ path ]: vuexModule }
+  VuexClass.prototype.__vuex_module_cache__ = rtn;
+  
   return rtn;
 
 }
@@ -121,6 +123,7 @@ function extractModulesFromInstance( cls :VuexModuleConstructor ) {
   return {
     submodules,
     mutations,
+    getters: extractDecoratorGetterNames( cls.prototype.__decorator_getter_names__ ),
     // Check if the vuex module is targeting nuxt return state as function. if not define state as normal.    
     state: moduleOptions.target === "nuxt" ? () => state : state,
   }
@@ -256,4 +259,12 @@ function extractModulesFromPrototype( cls :VuexModuleConstructor ) {
     getters
   }
 
+}
+
+function extractDecoratorGetterNames( names :string[] ) {
+  const decorator = {};
+  for( let name of names ) {
+    decorator[ name ] = new Function("state", `return state.${name}`);
+  }
+  return decorator;
 }

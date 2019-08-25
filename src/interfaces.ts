@@ -41,6 +41,7 @@ export interface VuexModuleInternalsPrototype {
     __setter_mutations__: {},
   };
   __explicit_getter_names__ :string[];
+  __decorator_getter_names__ :string[];
   __explicit_mutations_names__: string[],
   __actions__: {
     __name__ :string,

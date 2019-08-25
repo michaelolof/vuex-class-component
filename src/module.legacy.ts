@@ -2,6 +2,7 @@ import { VuexModuleConstructor, VuexModule, VuexModuleAddons, Map } from "./inte
 import { createModule, extractVuexModule } from "./module";
 import { createProxy, clearProxyCache } from './proxy';
 import { createSubModule } from './submodule';
+import { getClassPath, toCamelCase } from "./utils";
 
 const defaultModuleOptions :ModuleOptions = {
   namespacedPath: "",
@@ -44,15 +45,16 @@ export class LegacyVuexModule {
     const VuexClass = cls as VuexModule & VuexModuleConstructor;
     
     const vxmodule = extractVuexModule( VuexClass );
-
-    return vxmodule[ VuexClass.prototype.__namespacedPath__ ];
+    const path = getClassPath( VuexClass.prototype.__namespacedPath__ ) || toCamelCase( VuexClass.name );
+    console.log( "Module", vxmodule, "Path", path );
+    return vxmodule[ path ];
   }
 
   static CreateProxy<T extends typeof VuexModule>( $store :Map, cls :T ) {
     return createProxy( $store, cls );
   }
 
-  static CreateSubModule( cls :typeof VuexModule ) {
+  static CreateSubModule<T extends typeof VuexModule>( cls :T ) {
     return createSubModule( cls );
   }
 

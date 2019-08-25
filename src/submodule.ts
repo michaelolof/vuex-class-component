@@ -1,6 +1,6 @@
-import { VuexModule, SubModuleType, Map, VuexObject } from "./interfaces";
+import { VuexModule, SubModuleType, Map, VuexObject, VuexModuleConstructor } from "./interfaces";
 import { extractVuexModule } from "./module";
-import { toCamelCase } from "./utils"
+import { toCamelCase, getClassPath } from "./utils"
 
 export function isFieldASubModule( instance :VuexModule & Map, field :string ) {
   return( 
@@ -10,8 +10,10 @@ export function isFieldASubModule( instance :VuexModule & Map, field :string ) {
 }
 
 export function extractVuexSubModule( instance :VuexModule & Map, field :string ) {
-  const subModuleClass = instance[ field ][ "__submodule_class__" ];  
-  return extractVuexModule( subModuleClass  )[ toCamelCase( subModuleClass.name ) ] as VuexObject
+  const subModuleClass = instance[ field ][ "__submodule_class__" ] as VuexModule & VuexModuleConstructor;
+  const extract = extractVuexModule( subModuleClass  );
+  const path = getClassPath( subModuleClass.prototype.__namespacedPath__ ) || toCamelCase( subModuleClass.name );
+  return extract[ path ];
 }
 
 export function createSubModule<T>( Cls :T ) {
