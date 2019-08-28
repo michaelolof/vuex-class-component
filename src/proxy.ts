@@ -1,6 +1,6 @@
 import { extractVuexModule } from "./module";
 import { VuexModuleConstructor, Map, VuexModule, ProxyWatchers } from "./interfaces";
-import { getClassPath, toCamelCase } from "./utils";
+import { getClassPath, toCamelCase, refineNamespacedPath } from "./utils";
 
 
 export function clearProxyCache<T extends typeof VuexModule>( cls :T ) {
@@ -45,8 +45,10 @@ export function createProxy<T extends typeof VuexModule>( $store :any, cls :T ) 
       )
     }
 
+    const className = cls.name.toLowerCase();
+
     return $store.watch( 
-      () => $store.getters[ namespacedPath + "__internal_getter__"]( field ),
+      () => $store.getters[ namespacedPath + `__${className}_internal_getter__`]( field ),
       callback,
       options,
     )
@@ -232,6 +234,8 @@ function createLocalWatchers( cls :VuexModuleConstructor, $store :Map, namespace
 
   const getterNames = cls.prototype.__explicit_getter_names__;
 
+  const className = cls.name.toLowerCase();
+
   for( let field in watchMap ) {
     
     const fieldIsAnExplicitGetter = getterNames.indexOf( field ) > -1;
@@ -252,7 +256,7 @@ function createLocalWatchers( cls :VuexModuleConstructor, $store :Map, namespace
     }
     else { // This is so we can also watch implicit getters.
       $store.watch( 
-        () => $store.getters[ namespacedPath + "__internal_getter__" ]( field ),
+        () => $store.getters[ namespacedPath + `__${className}_internal_getter__` ]( field ),
         proxiedWatchFunc,
       )
     }
@@ -284,6 +288,9 @@ function createGettersAndMutationProxyFromState({ cls, proxy, state, $store, nam
    *            and a setter that calls a mutation commit on that value.
    *    1.2.2.  Go back to STEP 1.
    */
+  const className = cls.name.toLowerCase();
+  namespacedPath = refineNamespacedPath( namespacedPath );
+          
   for (let field in state) {
 
     let value = state[ field ];
@@ -296,8 +303,9 @@ function createGettersAndMutationProxyFromState({ cls, proxy, state, $store, nam
         get: () => { 
           // When creating local proxies getters doesn't exist on that context, so we have to account
           // for that.
-          if( $store.getters ) return $store.getters[ namespacedPath + "__internal_getter__" ]( path )
-          else return $store[ "__internal_getter__" ]( path ) 
+          if( $store.getters ) { 
+            return $store.getters[ namespacedPath + `__${className}_internal_getter__` ]( path )
+          }else return $store[ `__${className}_internal_getter__` ]( path ) 
         },
         set: payload => { 
           if( $store.commit ) $store.commit( namespacedPath + "__internal_mutator__", { field: path, payload });
@@ -344,9 +352,10 @@ function createExplicitMutationsProxy( cls :VuexModuleConstructor, proxy :Map, $
 function createGettersAndGetterMutationsProxy({ cls, getters, mutations, proxy, $store, namespacedPath } :GetterProxyCreator) {
   
   const getterMutations = Object.keys( cls.prototype.__mutations_cache__.__setter_mutations__ );
+  const className = cls.name.toLowerCase();
   // If there are defined setter mutations that do not have a corresponding getter, 
   // throw an error. 
-  if( $store && $store.__internal_getter__ ) {
+  if( $store && $store[`__${className}_internal_getter__`] ) {
     $store.__internal_mutator__ = mutations.__internal_mutator__;
   }
 
@@ -384,7 +393,7 @@ function createGettersAndGetterMutationsProxy({ cls, getters, mutations, proxy, 
 function createActionProxy({ cls, actions, proxy, $store, namespacedPath } :ActionProxyCreator) {
 
   const dispatch = cls.prototype.__store_cache__ ? cls.prototype.__store_cache__.dispatch : $store.dispatch;
-  namespacedPath = cls.prototype.__namespacedPath__.length ? cls.prototype.__namespacedPath__ + "/" : namespacedPath;
+  namespacedPath = refineNamespacedPath( cls.prototype.__namespacedPath__.length ? cls.prototype.__namespacedPath__ + "/" : namespacedPath );
 
   for( let field in actions ) {
     proxy[ field ] = function( payload :any )  { 

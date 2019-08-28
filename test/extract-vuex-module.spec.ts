@@ -103,7 +103,7 @@ describe('ExtractVuexModule', () => {
 		const { getters } = UserStore.ExtractVuexModule(UserStore)
 		// Note all states are automatically accessible as getters.
 		// This makes th `@getter` decorator redundant. But we have it for backwards compatibility.
-		expect(Object.keys(getters)).toEqual([ 'fullName', '__internal_getter__' ])
+		expect(Object.keys(getters)).toEqual([ 'fullName', `__${UserStore.name.toLowerCase()}_internal_getter__` ])
 	})
 
 	it('should extract all actions', () => {

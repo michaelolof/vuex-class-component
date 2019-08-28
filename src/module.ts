@@ -53,12 +53,13 @@ export function extractVuexModule( cls :typeof VuexModule ) {
   // Cache explicit mutations and getter mutations.
   VuexClass.prototype.__mutations_cache__.__explicit_mutations__ = fromPrototype.mutations.explicitMutations;
   VuexClass.prototype.__mutations_cache__.__setter_mutations__ = fromPrototype.mutations.setterMutations;
+  const className = VuexClass.name.toLowerCase();
 
   const vuexModule :VuexObject = {
     namespaced: VuexClass.prototype.__options__ && VuexClass.prototype.__options__.namespaced ? true : false,
     state: fromInstance.state,
     mutations: { ...fromPrototype.mutations.explicitMutations, ...fromPrototype.mutations.setterMutations, __internal_mutator__: internalMutator },
-    getters: { ...fromPrototype.getters, ...fromInstance.getters , __internal_getter__: internalGetter },
+    getters: { ...fromPrototype.getters, ...fromInstance.getters , [ `__${className}_internal_getter__`]: internalGetter },
     actions: { ...fromPrototype.actions, __internal_action__: internalAction },
     modules: fromInstance.submodules,
   };
