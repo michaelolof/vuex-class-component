@@ -121,9 +121,9 @@ export function _createProxy<T>(cls: T, $store: any, namespacedPath = "") {
   const classPath = getClassPath( VuexClass.prototype.__namespacedPath__ ) || toCamelCase( VuexClass.name );
   const { state, mutations, actions, getters, modules } = extractVuexModule( VuexClass )[ classPath ];
 
-  createGettersAndMutationProxyFromState({ cls: VuexClass, proxy, state, $store, namespacedPath, maxDepth: 7 });
-  createExplicitMutationsProxy( VuexClass, proxy, $store, namespacedPath );
+  createGettersAndMutationProxyFromState({ cls: VuexClass, proxy, state, $store, namespacedPath, maxDepth: 1 });
   createGettersAndGetterMutationsProxy({ cls: VuexClass, mutations, getters, proxy, $store, namespacedPath });
+  createExplicitMutationsProxy( VuexClass, proxy, $store, namespacedPath );
   createActionProxy({ cls: VuexClass, actions, proxy, $store, namespacedPath });
   createSubModuleProxy( $store, VuexClass, proxy, modules );
 
@@ -298,7 +298,7 @@ function createGettersAndMutationProxyFromState({ cls, proxy, state, $store, nam
     if (currentField.length && !currentField.endsWith(".")) currentField += ".";
     const path = currentField + field;
 
-    if ( maxDepth === 0 || typeof value !== "object") {
+    if ( typeof value !== "object") {
       Object.defineProperty(proxy, field, {
         get: () => { 
           // When creating local proxies getters doesn't exist on that context, so we have to account
@@ -341,7 +341,9 @@ function createExplicitMutationsProxy( cls :VuexModuleConstructor, proxy :Map, $
   
   const mutations = cls.prototype.__mutations_cache__.__explicit_mutations__;
   const commit = cls.prototype.__store_cache__ ? cls.prototype.__store_cache__.commit : $store.commit;
-  namespacedPath = cls.prototype.__namespacedPath__.length ? cls.prototype.__namespacedPath__ + "/" : namespacedPath;
+  namespacedPath = refineNamespacedPath( 
+    cls.prototype.__namespacedPath__.length ? cls.prototype.__namespacedPath__ + "/" : namespacedPath
+  );
 
   for( let field in mutations ) {
     proxy[ field ] = ( payload :any ) => commit( namespacedPath + field, payload )
@@ -358,6 +360,8 @@ function createGettersAndGetterMutationsProxy({ cls, getters, mutations, proxy, 
   if( $store && $store[`__${className}_internal_getter__`] ) {
     $store.__internal_mutator__ = mutations.__internal_mutator__;
   }
+
+  namespacedPath = refineNamespacedPath( namespacedPath );
 
   for( let field in getters ) {
 

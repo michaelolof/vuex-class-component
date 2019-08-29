@@ -46,7 +46,6 @@ export class LegacyVuexModule {
     
     const vxmodule = extractVuexModule( VuexClass );
     const path = getClassPath( VuexClass.prototype.__namespacedPath__ ) || toCamelCase( VuexClass.name );
-    console.log( "Module", vxmodule, "Path", path );
     return vxmodule[ path ];
   }
 

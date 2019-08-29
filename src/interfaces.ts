@@ -13,6 +13,7 @@ export interface VuexModuleOptions {
   enableLocalWatchers ?:boolean | string;
   enableLocalSubscriptions ?:boolean | string;
   enableLocalActionSubscriptions ?:boolean | string;
+  enableAutomaticGettersAndSetters ?:boolean;
 }
 
 export interface VuexModuleAddons {

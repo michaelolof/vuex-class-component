@@ -64,7 +64,6 @@ export function extractVuexModule( cls :typeof VuexModule ) {
     modules: fromInstance.submodules,
   };
 
-  
   // Cache the vuex module on the class.
   const path = getNamespacedPath( VuexClass ) || toCamelCase( VuexClass.name );
 
