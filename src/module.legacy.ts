@@ -23,6 +23,7 @@ export function Module({ namespacedPath = "", target = "core" as VuexModuleTarge
     const mod = createModule({
       target: VuexClass.prototype.__options__ && VuexClass.prototype.__options__.target,
       namespaced: VuexClass.prototype.__options__ && VuexClass.prototype.__options__.namespaced,
+      strict: true,
     });
 
     // Add all fields in mod prototype without replacing

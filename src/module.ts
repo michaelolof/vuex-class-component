@@ -58,9 +58,9 @@ export function extractVuexModule( cls :typeof VuexModule ) {
   const vuexModule :VuexObject = {
     namespaced: VuexClass.prototype.__options__ && VuexClass.prototype.__options__.namespaced ? true : false,
     state: fromInstance.state,
-    mutations: { ...fromPrototype.mutations.explicitMutations, ...fromPrototype.mutations.setterMutations, __internal_mutator__: internalMutator },
+    mutations: { ...fromPrototype.mutations.explicitMutations, ...fromPrototype.mutations.setterMutations, [`__${className}_internal_mutator__`]: internalMutator },
     getters: { ...fromPrototype.getters, ...fromInstance.getters , [ `__${className}_internal_getter__`]: internalGetter },
-    actions: { ...fromPrototype.actions, __internal_action__: internalAction },
+    actions: { ...fromPrototype.actions, [`__${className}_internal_action__`]: internalAction },
     modules: fromInstance.submodules,
   };
 
@@ -104,7 +104,6 @@ function extractModulesFromInstance( cls :VuexModuleConstructor ) {
     // Check if field is a submodule.
     const fieldIsSubModule = isFieldASubModule( instance, field  );
     if( fieldIsSubModule ) {
-      
       // Cache submodule class
       submodulesCache[ field ] = instance[ field ][ "__submodule_class__" ]
       
@@ -114,10 +113,10 @@ function extractModulesFromInstance( cls :VuexModuleConstructor ) {
           
       continue;
     }
-
+    
     // If field is not a submodule, then it must be a state.
     state[ field ] = instance[ field ];
-    
+        
   }
   
   return {

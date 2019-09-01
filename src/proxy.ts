@@ -2,11 +2,6 @@ import { extractVuexModule } from "./module";
 import { VuexModuleConstructor, Map, VuexModule, ProxyWatchers } from "./interfaces";
 import { getClassPath, toCamelCase, refineNamespacedPath } from "./utils";
 
-
-export function clearProxyCache<T extends typeof VuexModule>( cls :T ) {
-
-}
-
 export function createProxy<T extends typeof VuexModule>( $store :any, cls :T ) :ProxyWatchers & InstanceType<T> {
   //@ts-ignore
   const VuexClass = cls as VuexModuleConstructor;
@@ -116,12 +111,12 @@ export function _createProxy<T>(cls: T, $store: any, namespacedPath = "") {
 
   //@ts-ignore
   const VuexClass = cls as VuexModuleConstructor;
-  const proxy = {};
+  const proxy :Map = {};
   
   const classPath = getClassPath( VuexClass.prototype.__namespacedPath__ ) || toCamelCase( VuexClass.name );
   const { state, mutations, actions, getters, modules } = extractVuexModule( VuexClass )[ classPath ];
 
-  createGettersAndMutationProxyFromState({ cls: VuexClass, proxy, state, $store, namespacedPath, maxDepth: 1 });
+  createGettersAndMutationProxyFromState({ cls: VuexClass, proxy, state, $store, namespacedPath });
   createGettersAndGetterMutationsProxy({ cls: VuexClass, mutations, getters, proxy, $store, namespacedPath });
   createExplicitMutationsProxy( VuexClass, proxy, $store, namespacedPath );
   createActionProxy({ cls: VuexClass, actions, proxy, $store, namespacedPath });
@@ -133,11 +128,11 @@ export function _createProxy<T>(cls: T, $store: any, namespacedPath = "") {
 
 function createLocalSubscriberAction( cls :VuexModuleConstructor, $store :Map, namespacedPath :string ) {
 
-  const subscriberIsEnabled = cls.prototype.__options__ && cls.prototype.__options__.enableLocalActionSubscriptions;
+  const subscriberIsEnabled = cls.prototype.__options__ && cls.prototype.__options__.enableLocalWatchers;
 
   if( !subscriberIsEnabled ) return;
 
-  const field = subscriberIsEnabled === true ? "$subscribeAction" : subscriberIsEnabled;
+  const field = "$subscribeAction";
 
   // Access Static Class Field.
   //@ts-ignore
@@ -188,11 +183,11 @@ function createLocalSubscriberAction( cls :VuexModuleConstructor, $store :Map, n
 
 function createLocalSubscriber( cls :VuexModuleConstructor, $store :Map, namespacedPath :string ) {
   
-  const subscriberIsEnabled = cls.prototype.__options__ && cls.prototype.__options__.enableLocalSubscriptions;
+  const subscriberIsEnabled = cls.prototype.__options__ && cls.prototype.__options__.enableLocalWatchers;
 
   if( !subscriberIsEnabled ) return;
 
-  const field = subscriberIsEnabled === true ? "$subscribe" : subscriberIsEnabled;
+  const field = "$subscribe";
 
   // Access Static Class Field
   //@ts-ignore
@@ -224,7 +219,7 @@ function createLocalWatchers( cls :VuexModuleConstructor, $store :Map, namespace
 
   if( !watcherIsEnabled ) return;
 
-  const field = watcherIsEnabled === true ? "$watch" : watcherIsEnabled;
+  const field = "$watch";
 
   // Access Class Static Field
   //@ts-ignore
@@ -275,7 +270,7 @@ function createSubModuleProxy( $store :Map, cls:VuexModuleConstructor, proxy :Ma
 
 }
 
-function createGettersAndMutationProxyFromState({ cls, proxy, state, $store, namespacedPath = "", currentField = "", maxDepth = 7 }: { cls: VuexModuleConstructor, proxy: Map; state: Map; $store: any; namespacedPath?: string; currentField?: string; maxDepth: number}) {
+function createGettersAndMutationProxyFromState({ cls, proxy, state, $store, namespacedPath = "", currentField = "", maxDepth = 1 }: { cls: VuexModuleConstructor, proxy: Map; state: Map; $store: any; namespacedPath?: string; currentField?: string; maxDepth ?:number}) {
   /**
    * 1. Go through all fields in the object and check the values of those fields. 
    *  
@@ -290,32 +285,55 @@ function createGettersAndMutationProxyFromState({ cls, proxy, state, $store, nam
    */
   const className = cls.name.toLowerCase();
   namespacedPath = refineNamespacedPath( namespacedPath );
+  const autoMutationIsEnabled = cls.prototype.__options__ && cls.prototype.__options__.strict;
+  const submoduleNames = Object.keys( cls.prototype.__submodules_cache__ );
           
   for (let field in state) {
-
+    
+    const fieldIsSubmodule = submoduleNames.indexOf( field ) > -1;
     let value = state[ field ];
 
     if (currentField.length && !currentField.endsWith(".")) currentField += ".";
     const path = currentField + field;
 
-    if ( typeof value !== "object") {
-      Object.defineProperty(proxy, field, {
-        get: () => { 
-          // When creating local proxies getters doesn't exist on that context, so we have to account
-          // for that.
-          if( $store.getters ) { 
-            return $store.getters[ namespacedPath + `__${className}_internal_getter__` ]( path )
-          }else return $store[ `__${className}_internal_getter__` ]( path ) 
-        },
-        set: payload => { 
-          if( $store.commit ) $store.commit( namespacedPath + "__internal_mutator__", { field: path, payload });
-          else {
-            // We must be creating local proxies hence, $store.commit doesn't exist
-            const store = cls.prototype.__context_store__!;
-            store.commit( "__internal_mutator__", { field: path, payload })
-          }
-        },
-      })
+    if ( maxDepth === 0 || typeof value !== "object" ) {
+
+      if( autoMutationIsEnabled || fieldIsSubmodule ) {
+        
+        Object.defineProperty(proxy, field, {
+          get: () => { 
+            // When creating local proxies getters doesn't exist on that context, so we have to account
+            // for that.
+            if( $store.getters ) { 
+              return $store.getters[ namespacedPath + `__${className}_internal_getter__` ]( path )
+            }else return $store[ `__${className}_internal_getter__` ]( path ) 
+          },
+          set: payload => { 
+            if( $store.commit ) $store.commit( namespacedPath + `__${className}_internal_mutator__`, { field: path, payload });
+            else {
+              // We must be creating local proxies hence, $store.commit doesn't exist
+              const store = cls.prototype.__context_store__!;
+              store.commit( `__${className}_internal_mutator__`, { field: path, payload })
+            }
+          },
+        })
+
+      }
+
+      else {
+
+        Object.defineProperty(proxy, field, {
+          get: () => { 
+            // When creating local proxies getters doesn't exist on that context, so we have to account
+            // for that.
+            if( $store.getters ) { 
+              return $store.getters[ namespacedPath + `__${className}_internal_getter__` ]( path )
+            }else return $store[ `__${className}_internal_getter__` ]( path ) 
+          },
+        })
+
+      }
+
 
       continue;
     }
@@ -330,6 +348,72 @@ function createGettersAndMutationProxyFromState({ cls, proxy, state, $store, nam
       currentField: currentField + field,
       maxDepth: maxDepth - 1, 
     });
+
+    }
+  
+
+  return proxy;
+
+}
+
+/*
+ * @deprecated
+ */
+function __createGettersAndMutationProxyFromState({ cls, proxy, state, $store, namespacedPath = "" }: { cls: VuexModuleConstructor, proxy: Map; state: Map; $store: any; namespacedPath ?:string}) {
+
+  const className = cls.name.toLowerCase();
+  namespacedPath = refineNamespacedPath( namespacedPath );
+  const autoMutationIsEnabled = cls.prototype.__options__ && cls.prototype.__options__.strict;
+  const submoduleNames = Object.keys( cls.prototype.__submodules_cache__ );
+
+  for (let field in state) {
+
+    /*
+     * ATTENTION
+     *-----------------------------------
+     * The boolean condition below is necessary for handling an edge case. 
+     * For some strange reason, submodules are included in the state.
+     * I'm still trying to figure out why this is happening.
+     * The consequence is making the proxy getter only will cause problems
+     * So even if autoMutation is disabled we need to make the submodule field getter setter.
+     */
+    const fieldIsSubmodule = submoduleNames.indexOf( field ) > -1;
+
+    if( autoMutationIsEnabled || fieldIsSubmodule ) {
+      
+      Object.defineProperty( proxy, field, {
+        get: () => { 
+          // When creating local proxies getters doesn't exist on that context, so we have to account
+          // for that.
+          if( $store.getters ) { 
+            return $store.getters[ namespacedPath + `__${className}_internal_getter__` ]( field )
+          }else return $store[ `__${className}_internal_getter__` ]( field ) 
+        },
+        set: payload => { 
+          if( $store.commit ) $store.commit( namespacedPath + `__${className}_internal_mutator__`, { field, payload });
+          else {
+            // We must be creating local proxies hence, $store.commit doesn't exist
+            const store = cls.prototype.__context_store__!;
+            store.commit( `__${className}_internal_mutator__`, { field, payload })
+          }
+        },
+      })
+    
+    }
+    else {
+
+      Object.defineProperty( proxy, field, {
+        get: () => { 
+          // When creating local proxies getters doesn't exist on that context, so we have to account
+          // for that.
+          if( $store.getters ) { 
+            return $store.getters[ namespacedPath + `__${className}_internal_getter__` ]( field )
+          }else return $store[ `__${className}_internal_getter__` ]( field ) 
+        },
+      })
+
+    }
+    
   
   }
 
@@ -358,7 +442,7 @@ function createGettersAndGetterMutationsProxy({ cls, getters, mutations, proxy, 
   // If there are defined setter mutations that do not have a corresponding getter, 
   // throw an error. 
   if( $store && $store[`__${className}_internal_getter__`] ) {
-    $store.__internal_mutator__ = mutations.__internal_mutator__;
+    $store[`__${className}_internal_mutator__`] = mutations[`__${className}_internal_mutator__`];
   }
 
   namespacedPath = refineNamespacedPath( namespacedPath );

@@ -11,9 +11,7 @@ export interface VuexModuleOptions {
   namespaced ?:boolean | string;
   target ?:"nuxt";
   enableLocalWatchers ?:boolean | string;
-  enableLocalSubscriptions ?:boolean | string;
-  enableLocalActionSubscriptions ?:boolean | string;
-  enableAutomaticGettersAndSetters ?:boolean;
+  strict ?:boolean;
 }
 
 export interface VuexModuleAddons {
@@ -98,12 +96,13 @@ export interface ProxyWatchers {
     callback :( payload :any ) => void,
   ) :void
 
-  $subscribeAction (
-    actionField :string,
-    callbackOrObj :( payload :any ) => void | ({
-      before: ( payload :any ) => void,
-      after: ( payload :any ) => void,
-    })
-  ) :void
+  $subscribeAction ( actionField :string, callbackOrObj :SubScribeActionCallback | SubScribeActionObject ) :void
 
+}
+
+type SubScribeActionCallback = ( payload :any ) => void;
+
+type SubScribeActionObject = {
+  before: ( payload :any ) => void;
+  after: ( payload :any ) => void;
 }

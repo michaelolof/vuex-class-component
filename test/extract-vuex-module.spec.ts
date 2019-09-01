@@ -109,13 +109,13 @@ describe('ExtractVuexModule', () => {
 	it('should extract all actions', () => {
 		const { actions } = UserStore.ExtractVuexModule(UserStore)
 
-		expect(Object.keys(actions)).toEqual(['doSomethingAsync', 'doAnotherAsyncStuff', '__internal_action__'] )
+		expect(Object.keys(actions)).toEqual(['doSomethingAsync', 'doAnotherAsyncStuff', `__${UserStore.name.toLowerCase()}_internal_action__`] )
 	})
 
 	it('should extract all mutations', () => {
 		const { mutations } = UserStore.ExtractVuexModule(UserStore)
 
-		expect(Object.keys(mutations)).toEqual(['changeName', '__internal_mutator__'])
+		expect(Object.keys(mutations)).toEqual(['changeName', `__${UserStore.name.toLowerCase()}_internal_mutator__`])
 	})
 
 	it('should extract if module is namespaced or not', () => {		
