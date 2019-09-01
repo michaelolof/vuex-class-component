@@ -1,4 +1,7 @@
-export { VuexModule, Module } from "./module";
-export { mutation } from "./mutations";
+export { extractVuexModule, createModule } from "./module";
+export { createSubModule } from "./submodule";
+export { createProxy, clearProxyCache } from "./proxy";
 export { action, getRawActionContext } from "./actions";
-export { getter } from "./getters";
+export { mutation } from "./mutations";
+export { Module, LegacyVuexModule as VuexModule } from "./module.legacy";
+export { getter } from "./getters.legacy";

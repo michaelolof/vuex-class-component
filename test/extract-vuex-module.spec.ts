@@ -1,5 +1,4 @@
-import { getter, Module, mutation, VuexModule } from '../src/index'
-import { action } from '../src/actions'
+import { getter, Module, mutation, VuexModule, action } from '../src';
 
 interface Name {
 	firstname:string
@@ -7,7 +6,7 @@ interface Name {
 }
 
 @Module()
-class UserSettings extends VuexModule{
+class UserSettings extends VuexModule {
 	@getter cookieConsent = false
 
 	@mutation changeConsent(consent: boolean) {
@@ -17,6 +16,7 @@ class UserSettings extends VuexModule{
 
 @Module({ namespacedPath: 'user/' })
 class UserStore extends VuexModule {
+	
 	settings = UserSettings.CreateSubModule(UserSettings)
 
 	private firstname = 'Michael'
@@ -73,7 +73,9 @@ class NuxtUserStore extends VuexModule {
 
 
 describe('ExtractVuexModule', () => {
+
 	it('should extract all properties as state', () => {
+		
 		const { state } = UserStore.ExtractVuexModule( UserStore )
 
 		expect(state).toEqual({
@@ -99,25 +101,26 @@ describe('ExtractVuexModule', () => {
 
 	it('should extract all getters', () => {
 		const { getters } = UserStore.ExtractVuexModule(UserStore)
-
-		expect(Object.keys(getters)).toEqual(['speciality', 'occupation', 'fullName'])
+		// Note all states are automatically accessible as getters.
+		// This makes th `@getter` decorator redundant. But we have it for backwards compatibility.
+		expect(Object.keys(getters)).toEqual([ 'fullName', `__${UserStore.name.toLowerCase()}_internal_getter__` ])
 	})
 
 	it('should extract all actions', () => {
 		const { actions } = UserStore.ExtractVuexModule(UserStore)
 
-		expect(Object.keys(actions)).toEqual(['doSomethingAsync', 'doAnotherAsyncStuff'])
+		expect(Object.keys(actions)).toEqual(['doSomethingAsync', 'doAnotherAsyncStuff', `__${UserStore.name.toLowerCase()}_internal_action__`] )
 	})
 
 	it('should extract all mutations', () => {
 		const { mutations } = UserStore.ExtractVuexModule(UserStore)
 
-		expect(Object.keys(mutations)).toEqual(['changeName'])
+		expect(Object.keys(mutations)).toEqual(['changeName', `__${UserStore.name.toLowerCase()}_internal_mutator__`])
 	})
 
-	it('should extract if module is namespaced or not', () => {
+	it('should extract if module is namespaced or not', () => {		
 		expect(UserStore.ExtractVuexModule(UserStore)).toHaveProperty('namespaced', true)
-		expect(UserSettings.ExtractVuexModule(UserSettings)).toHaveProperty('namespaced', false)
+		expect(UserSettings.ExtractVuexModule(UserSettings)).toHaveProperty('namespaced', false);
 	})
 
 	it('should extract submodules', () => {
@@ -125,5 +128,6 @@ describe('ExtractVuexModule', () => {
 
 		expect(Object.keys(modules)).toEqual(['settings'])
 	})
+
 })
 

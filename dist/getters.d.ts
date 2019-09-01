@@ -1,1 +1,1 @@
-export declare function getter(target: any, propertyKey: string): void;
+export declare const internalGetter: (state: any, context: any) => (field: string) => any;

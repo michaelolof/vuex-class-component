@@ -43,4 +43,9 @@
 
     /* Experimental Options */
   },
+  "exclude": [
+    "test-js/*",
+    "test-ts/*",
+    "test/*"
+  ]
 }

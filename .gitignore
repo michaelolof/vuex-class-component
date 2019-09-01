@@ -1,4 +1,3 @@
-.vscode/
-test-js/
-test-ts/
 node_modules/
+test-ts/
+test-js/

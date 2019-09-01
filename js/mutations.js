@@ -1,18 +1,56 @@
-import { _mutations } from "./symbols";
+/*
+ * Define mutation decorator
+ */
 export function mutation(target, key, descriptor) {
-    var _a;
-    var func = descriptor.value || new Function();
-    var newFunc = function (state, payload) {
-        func.call(state, payload);
-    };
-    var mutations = target[_mutations];
-    if (mutations === undefined) {
-        target[_mutations] = (_a = {},
-            _a[key] = newFunc,
-            _a);
+    // Just store the name of the mutation.
+    initializeExplicitMutationsCache(target);
+    target.__explicit_mutations_names__.push(key);
+}
+export var internalMutator = function (state, _a) {
+    var field = _a.field, payload = _a.payload;
+    var fields = field.split(".");
+    switch (fields.length) {
+        case 1:
+            state[fields[0]] = payload;
+            break;
+        case 2:
+            state[fields[0]][fields[1]] = payload;
+            break;
+        case 3:
+            state[fields[0]][fields[1]][fields[2]] = payload;
+            break;
+        case 4:
+            state[fields[0]][fields[1]][fields[2]][fields[3]] = payload;
+            break;
+        case 5:
+            state[fields[0]][fields[1]][fields[2]][fields[3]][fields[4]] = payload;
+            break;
+        case 6:
+            state[fields[0]][fields[1]][fields[2]][fields[3]][fields[4]][fields[5]] = payload;
+            break;
+        case 7:
+            state[fields[0]][fields[1]][fields[2]][fields[3]][fields[4]][fields[5]][fields[6]] = payload;
+            break;
+        case 8:
+            state[fields[0]][fields[1]][fields[2]][fields[3]][fields[4]][fields[5]][fields[6]][fields[7]] = payload;
+            break;
+        case 9:
+            state[fields[0]][fields[1]][fields[2]][fields[3]][fields[4]][fields[5]][fields[6]][fields[7]][field[8]] = payload;
+            break;
+        case 10:
+            state[fields[0]][fields[1]][fields[2]][fields[3]][fields[4]][fields[5]][fields[6]][fields[7]][field[8]][field[9]] = payload;
+            break;
+        case 11:
+            state[fields[0]][fields[1]][fields[2]][fields[3]][fields[4]][fields[5]][fields[6]][fields[7]][field[8]][field[9]][field[10]] = payload;
+            break;
+        case 12:
+            state[fields[0]][fields[1]][fields[2]][fields[3]][fields[4]][fields[5]][fields[6]][fields[7]][field[8]][field[9]][field[10]][field[11]] = payload;
+            break;
     }
-    else {
-        target[_mutations][key] = newFunc;
+};
+function initializeExplicitMutationsCache(target) {
+    if (target.__explicit_mutations_names__ === undefined) {
+        target.__explicit_mutations_names__ = [];
     }
 }
 //# sourceMappingURL=mutations.js.map

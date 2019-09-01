@@ -1,21 +1,62 @@
-import { _mutations } from "./symbols";
+import { Map, FieldPayload, MutationDescriptor, VuexModuleInternalsPrototype } from "./interfaces";
 
-export type MutationDescriptor = TypedPropertyDescriptor<(payload?:any) => void>
-
+/*
+ * Define mutation decorator
+ */
 export function mutation( target:any, key:string, descriptor:MutationDescriptor ) {
-  const func:Function = descriptor.value || new Function()
-  const newFunc = function(state:any, payload:object) {
-    func.call( state, payload );
-  }
+  // Just store the name of the mutation.
+  initializeExplicitMutationsCache( target );
 
-  const mutations = target[ _mutations ];
-  if( mutations === undefined ) {
-    target[ _mutations ] = {
-      [ key ]: newFunc,
-    }
-  }
-  else {
-    target[ _mutations ][ key ] = newFunc
+  (target as VuexModuleInternalsPrototype).__explicit_mutations_names__.push( key );  
+}
+
+
+
+export const internalMutator = ( state :Map, { field, payload } :FieldPayload ) => {
+  const fields = field.split( "." );
+  switch( fields.length ) {
+    case 1:
+      state[ fields[0] ] = payload;
+      break;
+    case 2:
+      state[ fields[0] ][ fields[1] ] = payload;
+      break;
+    case 3:
+      state[ fields[0] ][ fields[1] ][ fields[2] ] = payload;
+      break;
+    case 4:
+      state[ fields[0] ][ fields[1] ][ fields[2] ][ fields[3] ] = payload;
+      break;
+    case 5:
+      state[ fields[0] ][ fields[1] ][ fields[2] ][ fields[3] ][ fields[4] ] = payload;
+      break;
+    case 6:
+      state[ fields[0] ][ fields[1] ][ fields[2] ][ fields[3] ][ fields[4] ][ fields[ 5] ] = payload;
+      break;
+    case 7:
+      state[ fields[0] ][ fields[1] ][ fields[2] ][ fields[3] ][ fields[4] ][ fields[ 5] ][ fields[6] ] = payload;
+      break;
+    case 8:
+      state[ fields[0] ][ fields[1] ][ fields[2] ][ fields[3] ][ fields[4] ][ fields[ 5] ][ fields[6] ][ fields[7] ] = payload;
+      break;
+    case 9:
+      state[ fields[0] ][ fields[1] ][ fields[2] ][ fields[3] ][ fields[4] ][ fields[ 5] ][ fields[6] ][ fields[7] ][ field[8] ] = payload;
+      break;
+    case 10:
+      state[ fields[0] ][ fields[1] ][ fields[2] ][ fields[3] ][ fields[4] ][ fields[ 5] ][ fields[6] ][ fields[7] ][ field[8] ][ field[9] ] = payload;
+      break;
+    case 11:
+      state[ fields[0] ][ fields[1] ][ fields[2] ][ fields[3] ][ fields[4] ][ fields[ 5] ][ fields[6] ][ fields[7] ][ field[8] ][ field[9] ][ field[10] ] = payload;
+      break;
+    case 12:
+      state[ fields[0] ][ fields[1] ][ fields[2] ][ fields[3] ][ fields[4] ][ fields[ 5] ][ fields[6] ][ fields[7] ][ field[8] ][ field[9] ][ field[10] ][ field[11] ] = payload;
+      break;
+
   }
 }
 
+function initializeExplicitMutationsCache(target :any) {  
+  if( ( target as VuexModuleInternalsPrototype).__explicit_mutations_names__ === undefined ) {
+    (target as VuexModuleInternalsPrototype).__explicit_mutations_names__ = [];
+  }
+}
