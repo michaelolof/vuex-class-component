@@ -45,6 +45,7 @@
   },
   "exclude": [
     "test-js/*",
-    "test-ts/*"
+    "test-ts/*",
+    "test/*"
   ]
 }

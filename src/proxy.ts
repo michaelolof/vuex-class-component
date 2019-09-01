@@ -2,6 +2,8 @@ import { extractVuexModule } from "./module";
 import { VuexModuleConstructor, Map, VuexModule, ProxyWatchers } from "./interfaces";
 import { getClassPath, toCamelCase, refineNamespacedPath } from "./utils";
 
+export function clearProxyCache<T extends typeof VuexModule>( cls :T ) {}
+
 export function createProxy<T extends typeof VuexModule>( $store :any, cls :T ) :ProxyWatchers & InstanceType<T> {
   //@ts-ignore
   const VuexClass = cls as VuexModuleConstructor;
