@@ -261,7 +261,7 @@ function extractModulesFromPrototype( cls :VuexModuleConstructor ) {
 }
 
 function extractDecoratorGetterNames( names :string[] ) {
-  const decorator = {};
+  const decorator :Map = {};
   for( let name of names ) {
     decorator[ name ] = new Function("state", `return state.${name}`);
   }
