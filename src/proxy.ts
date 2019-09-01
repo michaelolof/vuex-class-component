@@ -287,7 +287,7 @@ function createGettersAndMutationProxyFromState({ cls, proxy, state, $store, nam
    */
   const className = cls.name.toLowerCase();
   namespacedPath = refineNamespacedPath( namespacedPath );
-  const autoMutationIsEnabled = cls.prototype.__options__ && cls.prototype.__options__.strict;
+  const strict = cls.prototype.__options__ && cls.prototype.__options__.strict;
   const submoduleNames = Object.keys( cls.prototype.__submodules_cache__ );
           
   for (let field in state) {
@@ -300,7 +300,7 @@ function createGettersAndMutationProxyFromState({ cls, proxy, state, $store, nam
 
     if ( maxDepth === 0 || typeof value !== "object" ) {
 
-      if( autoMutationIsEnabled || fieldIsSubmodule ) {
+      if( !strict || fieldIsSubmodule ) {
         
         Object.defineProperty(proxy, field, {
           get: () => { 
@@ -365,7 +365,7 @@ function __createGettersAndMutationProxyFromState({ cls, proxy, state, $store, n
 
   const className = cls.name.toLowerCase();
   namespacedPath = refineNamespacedPath( namespacedPath );
-  const autoMutationIsEnabled = cls.prototype.__options__ && cls.prototype.__options__.strict;
+  const strict = cls.prototype.__options__ && cls.prototype.__options__.strict;
   const submoduleNames = Object.keys( cls.prototype.__submodules_cache__ );
 
   for (let field in state) {
@@ -381,7 +381,7 @@ function __createGettersAndMutationProxyFromState({ cls, proxy, state, $store, n
      */
     const fieldIsSubmodule = submoduleNames.indexOf( field ) > -1;
 
-    if( autoMutationIsEnabled || fieldIsSubmodule ) {
+    if( !strict || fieldIsSubmodule ) {
       
       Object.defineProperty( proxy, field, {
         get: () => { 
