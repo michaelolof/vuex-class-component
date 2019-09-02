@@ -16,7 +16,7 @@ export function extractVuexSubModule( instance :VuexModule & Map, field :string 
   return extract[ path ];
 }
 
-export function createSubModule<T>( Cls :T ) {
+export function createSubModule<T extends typeof VuexModule>( Cls :T ) {
   const sub :SubModuleType<T> = {
     __submodule_type__: "submodule",
     __submodule_class__: Cls, 
