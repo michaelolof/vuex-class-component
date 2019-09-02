@@ -109,7 +109,7 @@ export function createLocalProxy<T extends typeof VuexModule>( cls :T, $store :a
   return proxy as InstanceType<T>;
 }
 
-export function _createProxy<T>(cls: T, $store: any, namespacedPath = "") {
+export function _createProxy<T extends typeof VuexModule>(cls: T, $store: any, namespacedPath = "") {
 
   //@ts-ignore
   const VuexClass = cls as VuexModuleConstructor;
