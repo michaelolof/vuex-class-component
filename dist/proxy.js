@@ -339,7 +339,7 @@ function __createGettersAndMutationProxyFromState(_a) {
     return proxy;
 }
 function createExplicitMutationsProxy(cls, proxy, $store, namespacedPath) {
-    var mutations = cls.prototype.__mutations_cache__.__explicit_mutations__;
+    var mutations = cls.prototype.__mutations_cache__ && cls.prototype.__mutations_cache__.__explicit_mutations__ || {};
     var commit = cls.prototype.__store_cache__ ? cls.prototype.__store_cache__.commit : $store.commit;
     namespacedPath = utils_1.refineNamespacedPath(cls.prototype.__namespacedPath__.length ? cls.prototype.__namespacedPath__ + "/" : namespacedPath);
     var _loop_6 = function (field) {
@@ -351,7 +351,7 @@ function createExplicitMutationsProxy(cls, proxy, $store, namespacedPath) {
 }
 function createGettersAndGetterMutationsProxy(_a) {
     var cls = _a.cls, getters = _a.getters, mutations = _a.mutations, proxy = _a.proxy, $store = _a.$store, namespacedPath = _a.namespacedPath;
-    var getterMutations = Object.keys(cls.prototype.__mutations_cache__.__setter_mutations__);
+    var getterMutations = Object.keys(cls.prototype.__mutations_cache__ && cls.prototype.__mutations_cache__.__setter_mutations__ || {});
     var className = cls.name.toLowerCase();
     // If there are defined setter mutations that do not have a corresponding getter, 
     // throw an error. 
@@ -407,7 +407,7 @@ function createActionProxy(_a) {
 function runSetterCheck(cls, getters) {
     // if there are setters defined that are not in getters.
     // throw an error.
-    var setterMutations = cls.prototype.__mutations_cache__.__setter_mutations__;
+    var setterMutations = cls.prototype.__mutations_cache__ && cls.prototype.__mutations_cache__.__setter_mutations__ || {};
     for (var field in setterMutations) {
         var setterIsNotInGetters = Object.keys(getters).indexOf(field) < 0;
         if (setterIsNotInGetters) {

@@ -36,11 +36,9 @@ export function getRawActionContext<T extends VuexModule, R>( thisArg:ThisType<T
 
 function handleMutateActionMode(target:VuexModule, key:string, descriptor:ActionDescriptor) {
 
-  console.log( ">>", target )
-
   initializeActionsCache( target );
   
-  (target as VuexModule & VuexModuleInternalsPrototype).__actions__.push({
+  (target as VuexModule & VuexModuleInternalsPrototype).__actions__!.push({
     __name__: key,
     __type__: "mutate",
   })
@@ -51,7 +49,7 @@ function handleRawActionMode(target:VuexModule, key:string, descriptor:ActionDes
   
   initializeActionsCache( target );
   
-  (target as VuexModule & VuexModuleInternalsPrototype).__actions__.push({
+  (target as VuexModule & VuexModuleInternalsPrototype).__actions__!.push({
     __name__: key,
     __type__: "raw",
   });

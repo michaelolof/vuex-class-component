@@ -29,14 +29,14 @@ export interface VuexModuleInternalsPrototype {
     __mutations_cache__: {
         __explicit_mutations__: {};
         __setter_mutations__: {};
-    };
+    } | undefined;
     __explicit_getter_names__: string[];
-    __decorator_getter_names__: string[];
+    __decorator_getter_names__: string[] | undefined;
     __explicit_mutations_names__: string[];
     __actions__: {
         __name__: string;
         __type__: ActionType;
-    }[];
+    }[] | undefined;
     __watch__: Map;
     __store_cache__: any;
 }

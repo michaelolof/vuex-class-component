@@ -425,7 +425,7 @@ function __createGettersAndMutationProxyFromState({ cls, proxy, state, $store, n
 
 function createExplicitMutationsProxy( cls :VuexModuleConstructor, proxy :Map, $store :any, namespacedPath :string ) {
   
-  const mutations = cls.prototype.__mutations_cache__.__explicit_mutations__;
+  const mutations = cls.prototype.__mutations_cache__ && cls.prototype.__mutations_cache__.__explicit_mutations__ || {};
   const commit = cls.prototype.__store_cache__ ? cls.prototype.__store_cache__.commit : $store.commit;
   namespacedPath = refineNamespacedPath( 
     cls.prototype.__namespacedPath__.length ? cls.prototype.__namespacedPath__ + "/" : namespacedPath
@@ -439,7 +439,9 @@ function createExplicitMutationsProxy( cls :VuexModuleConstructor, proxy :Map, $
 
 function createGettersAndGetterMutationsProxy({ cls, getters, mutations, proxy, $store, namespacedPath } :GetterProxyCreator) {
   
-  const getterMutations = Object.keys( cls.prototype.__mutations_cache__.__setter_mutations__ );
+  const getterMutations = Object.keys( 
+    cls.prototype.__mutations_cache__ && cls.prototype.__mutations_cache__.__setter_mutations__ || {}
+  );
   const className = cls.name.toLowerCase();
   // If there are defined setter mutations that do not have a corresponding getter, 
   // throw an error. 
@@ -495,7 +497,7 @@ function createActionProxy({ cls, actions, proxy, $store, namespacedPath } :Acti
 function runSetterCheck( cls :VuexModuleConstructor, getters :Map ) {
   // if there are setters defined that are not in getters.
   // throw an error.
-  const setterMutations = cls.prototype.__mutations_cache__.__setter_mutations__;
+  const setterMutations = cls.prototype.__mutations_cache__ && cls.prototype.__mutations_cache__.__setter_mutations__ || {};
   for( let field in setterMutations ) {
     const setterIsNotInGetters = Object.keys( getters ).indexOf( field ) < 0;
     if( setterIsNotInGetters ) {

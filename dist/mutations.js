@@ -52,8 +52,15 @@ exports.internalMutator = function (state, _a) {
     }
 };
 function initializeExplicitMutationsCache(target) {
-    if (target.__explicit_mutations_names__ === undefined) {
-        target.__explicit_mutations_names__ = [];
+    var cls = target;
+    if (cls.__explicit_mutations_names__ === undefined) {
+        cls.__explicit_mutations_names__ = [];
+    }
+    if (cls.__mutations_cache__ === undefined) {
+        cls.__mutations_cache__ = {
+            __explicit_mutations__: {},
+            __setter_mutations__: {},
+        };
     }
 }
 //# sourceMappingURL=mutations.js.map
