@@ -36,6 +36,7 @@ export function getRawActionContext<T extends VuexModule, R>( thisArg:ThisType<T
 
 function handleMutateActionMode(target:VuexModule, key:string, descriptor:ActionDescriptor) {
 
+  console.log( ">>", target )
 
   initializeActionsCache( target );
   

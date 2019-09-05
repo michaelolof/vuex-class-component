@@ -451,7 +451,7 @@ function createGettersAndGetterMutationsProxy({ cls, getters, mutations, proxy, 
 
   for( let field in getters ) {
 
-    if( $store === undefined ) continue;
+    if( $store === undefined || proxy[ field ] ) continue;
 
     const fieldHasGetterAndMutation = getterMutations.indexOf( field ) > -1;
     if( fieldHasGetterAndMutation ) {

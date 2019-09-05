@@ -6,7 +6,6 @@ import { Map, FieldPayload, MutationDescriptor, VuexModuleInternalsPrototype } f
 export function mutation( target:any, key:string, descriptor:MutationDescriptor ) {
   // Just store the name of the mutation.
   initializeExplicitMutationsCache( target );
-
   (target as VuexModuleInternalsPrototype).__explicit_mutations_names__.push( key );  
 }
 
@@ -56,7 +55,15 @@ export const internalMutator = ( state :Map, { field, payload } :FieldPayload ) 
 }
 
 function initializeExplicitMutationsCache(target :any) {  
-  if( ( target as VuexModuleInternalsPrototype).__explicit_mutations_names__ === undefined ) {
-    (target as VuexModuleInternalsPrototype).__explicit_mutations_names__ = [];
+  const cls = target as VuexModuleInternalsPrototype;
+  if ( cls.__explicit_mutations_names__ === undefined ) {
+    cls.__explicit_mutations_names__ = [];
+  }
+
+  if( cls.__mutations_cache__ === undefined ) {
+    cls.__mutations_cache__ = {
+      __explicit_mutations__: {},
+      __setter_mutations__: {},
+    }
   }
 }

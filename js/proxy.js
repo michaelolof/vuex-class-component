@@ -354,7 +354,7 @@ function createGettersAndGetterMutationsProxy(_a) {
     }
     namespacedPath = refineNamespacedPath(namespacedPath);
     var _loop_7 = function (field) {
-        if ($store === undefined)
+        if ($store === undefined || proxy[field])
             return "continue";
         var fieldHasGetterAndMutation = getterMutations.indexOf(field) > -1;
         if (fieldHasGetterAndMutation) {

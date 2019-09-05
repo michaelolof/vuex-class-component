@@ -16,24 +16,21 @@ export function createModule( options ?:VuexModuleOptions ) {
    * options variable as it is an internal variable.
    */
   (VuexModule as VuexModuleConstructor).prototype.__options__ = options;
-  (VuexModule as VuexModuleConstructor).prototype.__namespacedPath__ = "";
-  (VuexModule as VuexModuleConstructor).prototype.__vuex_module_cache__ = undefined;
-  (VuexModule as VuexModuleConstructor).prototype.__vuex_proxy_cache__ = undefined;
-  (VuexModule as VuexModuleConstructor).prototype.__vuex_local_proxy_cache__ = undefined;
-  (VuexModule as VuexModuleConstructor).prototype.__submodules_cache__ = {};
-  (VuexModule as VuexModuleConstructor).prototype.__context_store__ = {};
-  (VuexModule as VuexModuleConstructor).prototype.__mutations_cache__ = {
-    __explicit_mutations__: {},
-    __setter_mutations__: {}
-  };
-  (VuexModule as VuexModuleConstructor).prototype.__explicit_mutations_names__ = [];
-  (VuexModule as VuexModuleConstructor).prototype.__actions__ = [];
-  (VuexModule as VuexModuleConstructor).prototype.__watch__ = {};
-  (VuexModule as VuexModuleConstructor).prototype.__explicit_getter_names__ = [];
-  (VuexModule as VuexModuleConstructor).prototype.__decorator_getter_names__ = [];
 
   return VuexModule;
 
+}
+
+
+function initializeModuleInternals( cls: VuexModuleConstructor ) {
+  cls.prototype.__namespacedPath__ = "";
+  cls.prototype.__vuex_module_cache__ = undefined;
+  cls.prototype.__vuex_proxy_cache__ = undefined;
+  cls.prototype.__vuex_local_proxy_cache__ = undefined;
+  cls.prototype.__submodules_cache__ = {};
+  cls.prototype.__context_store__ = {};
+  cls.prototype.__watch__ = {};
+  cls.prototype.__explicit_getter_names__ = [];
 }
 
 export function extractVuexModule( cls :typeof VuexModule ) {
@@ -46,13 +43,20 @@ export function extractVuexModule( cls :typeof VuexModule ) {
     return VuexClass.prototype.__vuex_module_cache__;
   }
 
+  initializeModuleInternals( VuexClass );
+
   // If not extract vuex module from class.
   const fromInstance = extractModulesFromInstance( VuexClass );
   const fromPrototype = extractModulesFromPrototype( VuexClass );
 
+  // console.log( "Class Name", VuexClass, VuexClass.name, VuexClass.prototype.__mutations_cache__ )
+  // console.log( "Mutation Names", VuexClass.name, VuexClass.prototype.__actions__ )
+
   // Cache explicit mutations and getter mutations.
-  VuexClass.prototype.__mutations_cache__.__explicit_mutations__ = fromPrototype.mutations.explicitMutations;
-  VuexClass.prototype.__mutations_cache__.__setter_mutations__ = fromPrototype.mutations.setterMutations;
+  VuexClass.prototype.__mutations_cache__ = { 
+    __explicit_mutations__: fromPrototype.mutations.explicitMutations,
+    __setter_mutations__: fromPrototype.mutations.setterMutations,
+  }
   const className = VuexClass.name.toLowerCase();
 
   const vuexModule :VuexObject = {
@@ -69,7 +73,7 @@ export function extractVuexModule( cls :typeof VuexModule ) {
 
   const rtn = { [ path ]: vuexModule }
   VuexClass.prototype.__vuex_module_cache__ = rtn;
-  
+
   return rtn;
 
 }
@@ -260,7 +264,7 @@ function extractModulesFromPrototype( cls :VuexModuleConstructor ) {
 
 }
 
-function extractDecoratorGetterNames( names :string[] ) {
+function extractDecoratorGetterNames( names :string[] = [] ) {
   const decorator :Map = {};
   for( let name of names ) {
     decorator[ name ] = new Function("state", `return state.${name}`);
