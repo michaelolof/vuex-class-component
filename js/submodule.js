@@ -1,7 +1,8 @@
 import { extractVuexModule } from "./module";
 import { toCamelCase, getClassPath } from "./utils";
 export function isFieldASubModule(instance, field) {
-    return (typeof instance[field] === "object" &&
+    return (instance[field] != null &&
+        typeof instance[field] === "object" &&
         instance[field]["__submodule_type__"] === "submodule");
 }
 export function extractVuexSubModule(instance, field) {

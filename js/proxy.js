@@ -219,7 +219,7 @@ function createGettersAndMutationProxyFromState(_a) {
         if (currentField.length && !currentField.endsWith("."))
             currentField += ".";
         var path = currentField + field;
-        if (maxDepth === 0 || typeof value !== "object") {
+        if (maxDepth === 0 || typeof value !== "object" || (typeof value === 'object' && !fieldIsSubmodule)) {
             if (!strict || fieldIsSubmodule) {
                 Object.defineProperty(proxy, field, {
                     get: function () {

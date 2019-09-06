@@ -298,7 +298,7 @@ function createGettersAndMutationProxyFromState({ cls, proxy, state, $store, nam
     if (currentField.length && !currentField.endsWith(".")) currentField += ".";
     const path = currentField + field;
 
-    if ( maxDepth === 0 || typeof value !== "object" ) {
+    if ( maxDepth === 0 || typeof value !== "object" || (typeof value === 'object' && !fieldIsSubmodule) ) {
 
       if( !strict || fieldIsSubmodule ) {
         
