@@ -116,7 +116,11 @@ export function _createProxy<T extends typeof VuexModule>(cls: T, $store: any, n
   const proxy :Map = {};
   
   const classPath = getClassPath( VuexClass.prototype.__namespacedPath__ ) || toCamelCase( VuexClass.name );
-  const { state, mutations, actions, getters, modules } = extractVuexModule( VuexClass )[ classPath ];
+  let { state, mutations, actions, getters, modules } = extractVuexModule( VuexClass )[ classPath ];
+  
+  // For nuxt support state returns as a function
+  // We need to handle this. 
+  if( typeof state === "function" ) state = state();
 
   createGettersAndMutationProxyFromState({ cls: VuexClass, proxy, state, $store, namespacedPath });
   createGettersAndGetterMutationsProxy({ cls: VuexClass, mutations, getters, proxy, $store, namespacedPath });

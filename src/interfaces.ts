@@ -59,10 +59,10 @@ export type DictionaryField = string | number | symbol
 
 export interface VuexObject {
   namespaced :boolean | undefined;
-  state :Record<DictionaryField, any>
-  mutations :Record<DictionaryField, any>
-  getters :Record<DictionaryField, any>
-  actions :Record<DictionaryField, any>
+  state :Map | (() => Map);
+  mutations :Map
+  getters :Map
+  actions :Map
   modules :Record<DictionaryField, VuexObject>  
 }
 
