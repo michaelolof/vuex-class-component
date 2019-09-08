@@ -47,10 +47,10 @@ export interface SubModuleType<T> {
 export declare type DictionaryField = string | number | symbol;
 export interface VuexObject {
     namespaced: boolean | undefined;
-    state: Record<DictionaryField, any>;
-    mutations: Record<DictionaryField, any>;
-    getters: Record<DictionaryField, any>;
-    actions: Record<DictionaryField, any>;
+    state: Map | Function;
+    mutations: Map;
+    getters: Map;
+    actions: Map;
     modules: Record<DictionaryField, VuexObject>;
 }
 export declare type Map = Record<DictionaryField, any>;

@@ -498,36 +498,6 @@ function createActionProxy({ cls, actions, proxy, $store, namespacedPath } :Acti
   }
 }
 
-function runSetterCheck( cls :VuexModuleConstructor, getters :Map ) {
-  // if there are setters defined that are not in getters.
-  // throw an error.
-  const setterMutations = cls.prototype.__mutations_cache__ && cls.prototype.__mutations_cache__.__setter_mutations__ || {};
-  for( let field in setterMutations ) {
-    const setterIsNotInGetters = Object.keys( getters ).indexOf( field ) < 0;
-    if( setterIsNotInGetters ) {
-
-      throw new Error(
-        `\nImproper Use of Setter Mutations:\n` + 
-        `at >>\n` +
-        `set ${ field }( payload ) {\n` +
-        `\t...\n` +
-        `}\n` +
-        `\n` +
-        `Setter mutations should only be used if there is a corresponding getter defined.\n` +
-        `\n` +
-        `Either define a corresponding getter for this setter mutation or,\n` +
-        `Define them as an explicit mutation using function assignment.\n` +
-        `Example:\n` +
-        `--------------------\n` +
-        `${ field } = ( payload ) => {\n` +
-        ` ...\n` +
-        `}`
-      )
-
-    }
-  }
-}
-
 interface ProxyCreator {
   proxy :Map;
   $store :any;

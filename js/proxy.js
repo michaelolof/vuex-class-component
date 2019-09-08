@@ -85,6 +85,10 @@ export function _createProxy(cls, $store, namespacedPath) {
     var proxy = {};
     var classPath = getClassPath(VuexClass.prototype.__namespacedPath__) || toCamelCase(VuexClass.name);
     var _a = extractVuexModule(VuexClass)[classPath], state = _a.state, mutations = _a.mutations, actions = _a.actions, getters = _a.getters, modules = _a.modules;
+    // For nuxt support state returns as a function
+    // We need to handle this. 
+    if (typeof state === "function")
+        state = state();
     createGettersAndMutationProxyFromState({ cls: VuexClass, proxy: proxy, state: state, $store: $store, namespacedPath: namespacedPath });
     createGettersAndGetterMutationsProxy({ cls: VuexClass, mutations: mutations, getters: getters, proxy: proxy, $store: $store, namespacedPath: namespacedPath });
     createExplicitMutationsProxy(VuexClass, proxy, $store, namespacedPath);
@@ -396,31 +400,6 @@ function createActionProxy(_a) {
     };
     for (var field in actions) {
         _loop_8(field);
-    }
-}
-function runSetterCheck(cls, getters) {
-    // if there are setters defined that are not in getters.
-    // throw an error.
-    var setterMutations = cls.prototype.__mutations_cache__ && cls.prototype.__mutations_cache__.__setter_mutations__ || {};
-    for (var field in setterMutations) {
-        var setterIsNotInGetters = Object.keys(getters).indexOf(field) < 0;
-        if (setterIsNotInGetters) {
-            throw new Error("\nImproper Use of Setter Mutations:\n" +
-                "at >>\n" +
-                ("set " + field + "( payload ) {\n") +
-                "\t...\n" +
-                "}\n" +
-                "\n" +
-                "Setter mutations should only be used if there is a corresponding getter defined.\n" +
-                "\n" +
-                "Either define a corresponding getter for this setter mutation or,\n" +
-                "Define them as an explicit mutation using function assignment.\n" +
-                "Example:\n" +
-                "--------------------\n" +
-                (field + " = ( payload ) => {\n") +
-                " ...\n" +
-                "}");
-        }
     }
 }
 //# sourceMappingURL=proxy.js.map

@@ -59,7 +59,7 @@ export type DictionaryField = string | number | symbol
 
 export interface VuexObject {
   namespaced :boolean | undefined;
-  state :Map | (() => Map);
+  state :Map | Function;
   mutations :Map
   getters :Map
   actions :Map
