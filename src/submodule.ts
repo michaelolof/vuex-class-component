@@ -3,7 +3,8 @@ import { extractVuexModule } from "./module";
 import { toCamelCase, getClassPath } from "./utils"
 
 export function isFieldASubModule( instance :VuexModule & Map, field :string ) {
-  return( 
+  return(
+    instance[ field ] != null &&
     typeof instance[ field ] === "object" && 
     instance[ field ][ "__submodule_type__" ] === "submodule" 
   )

@@ -3,7 +3,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var module_1 = require("./module");
 var utils_1 = require("./utils");
 function isFieldASubModule(instance, field) {
-    return (typeof instance[field] === "object" &&
+    return (instance[field] != null &&
+        typeof instance[field] === "object" &&
         instance[field]["__submodule_type__"] === "submodule");
 }
 exports.isFieldASubModule = isFieldASubModule;
