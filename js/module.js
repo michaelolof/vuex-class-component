@@ -119,7 +119,7 @@ function extractModulesFromPrototype(cls) {
     var getters = {};
     var descriptors = getDescriptors(cls.prototype);
     var gettersList = Object.keys(descriptors).filter(function (field) { return descriptors[field].get; });
-    var explicitMutationNames = cls.prototype.__explicit_mutations_names__;
+    var explicitMutationNames = cls.prototype.__explicit_mutations_names__ || [];
     var actionNames = cls.prototype.__actions__ || [];
     var _loop_1 = function (field) {
         // Ignore the constructor and module interals.
