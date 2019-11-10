@@ -1,6 +1,6 @@
 import { Store } from "vuex";
 export interface VuexModuleOptions {
-    namespaced?: boolean | string;
+    namespaced?: string;
     target?: "nuxt";
     enableLocalWatchers?: boolean | string;
     strict?: boolean;
