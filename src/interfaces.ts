@@ -2,11 +2,9 @@ import { Store } from "vuex";
 
 export interface VuexModuleOptions {
   /*
-   * Takes a boolean or a namespacedPath.
+   * Takes a namespacedPath.
    * Defines wether the module should be namespaced or not.
-   * If true, then the module will be namespaced.
-   * If false, then the module will not be namespaced.
-   * If it is a string the module will be namespaced and the value will be the namespaced path
+   * If a string the module will be namespaced and the value will be the namespaced path
    */
   namespaced ?:string;
   target ?:"nuxt";

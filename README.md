@@ -41,7 +41,7 @@ const user = {
 import { createModule, mutation, action, extractVuexModule } from "vuex-class-component";
 
 const VuexModule = createModule({
-  namespaced: true,
+  namespaced: "user",
   strict: false,
   target: "nuxt",
 })
