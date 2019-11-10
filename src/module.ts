@@ -140,7 +140,7 @@ function extractModulesFromPrototype( cls :VuexModuleConstructor ) {
   const getters :Record<DictionaryField, any> = {};
   const descriptors :PropertyDescriptorMap = getDescriptors( cls.prototype );
   const gettersList :string[] = Object.keys( descriptors ).filter( field => descriptors[ field ].get );
-  const explicitMutationNames :string[] = cls.prototype.__explicit_mutations_names__;
+  const explicitMutationNames :string[] = cls.prototype.__explicit_mutations_names__ || [];
   const actionNames = cls.prototype.__actions__ || [];
 
   for( let field in descriptors ) {
