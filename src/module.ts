@@ -49,9 +49,6 @@ export function extractVuexModule( cls :typeof VuexModule ) {
   const fromInstance = extractModulesFromInstance( VuexClass );
   const fromPrototype = extractModulesFromPrototype( VuexClass );
 
-  // console.log( "Class Name", VuexClass, VuexClass.name, VuexClass.prototype.__mutations_cache__ )
-  // console.log( "Mutation Names", VuexClass.name, VuexClass.prototype.__actions__ )
-
   // Cache explicit mutations and getter mutations.
   VuexClass.prototype.__mutations_cache__ = { 
     __explicit_mutations__: fromPrototype.mutations.explicitMutations,
@@ -80,17 +77,12 @@ export function extractVuexModule( cls :typeof VuexModule ) {
 
 export function getNamespacedPath( cls :VuexModuleConstructor ) {
   
-  if( cls.prototype.__options__ && cls.prototype.__options__.namespaced ) {
-    switch( cls.prototype.__options__.namespaced ) {
-      case true: 
-        cls.prototype.__namespacedPath__ = toCamelCase( cls.name );
-        break;
-      default:
-        cls.prototype.__namespacedPath__ = cls.prototype.__options__.namespaced.split("/")[0]
-    }
-  }
+  const namespaced = cls.prototype.__options__ && cls.prototype.__options__.namespaced;
+
+  if( namespaced ) cls.prototype.__namespacedPath__ = namespaced.split("/")[0]
 
   return cls.prototype.__namespacedPath__;
+  
 }
 
 function extractModulesFromInstance( cls :VuexModuleConstructor ) {

@@ -8,7 +8,7 @@ export interface VuexModuleOptions {
    * If false, then the module will not be namespaced.
    * If it is a string the module will be namespaced and the value will be the namespaced path
    */
-  namespaced ?:boolean | string;
+  namespaced ?:string;
   target ?:"nuxt";
   enableLocalWatchers ?:boolean | string;
   strict ?:boolean;
