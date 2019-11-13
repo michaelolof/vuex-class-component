@@ -15,9 +15,9 @@ export function createModule( options ?:VuexModuleOptions ) {
    * We do it like this because we don't want intelissense to pick up the
    * options variable as it is an internal variable.
    */
-  (VuexModule as VuexModuleConstructor).prototype.__options__ = options;
-
-  return VuexModule;
+  const vuexModule = new Function() as VuexModuleConstructor;
+  vuexModule.prototype.__options__ = options;
+  return VuexModule as typeof VuexModule;
 
 }
 

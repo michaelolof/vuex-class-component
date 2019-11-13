@@ -23,7 +23,8 @@ export function createModule(options) {
      * We do it like this because we don't want intelissense to pick up the
      * options variable as it is an internal variable.
      */
-    VuexModule.prototype.__options__ = options;
+    var vuexModule = new Function();
+    vuexModule.prototype.__options__ = options;
     return VuexModule;
 }
 function initializeModuleInternals(cls) {

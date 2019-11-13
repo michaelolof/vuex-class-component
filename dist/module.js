@@ -28,7 +28,8 @@ function createModule(options) {
      * We do it like this because we don't want intelissense to pick up the
      * options variable as it is an internal variable.
      */
-    interfaces_1.VuexModule.prototype.__options__ = options;
+    var vuexModule = new Function();
+    vuexModule.prototype.__options__ = options;
     return interfaces_1.VuexModule;
 }
 exports.createModule = createModule;
