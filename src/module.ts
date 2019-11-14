@@ -17,7 +17,7 @@ export function createModule( options ?:VuexModuleOptions ) {
    */
   const vuexModule = new Function() as VuexModuleConstructor;
   vuexModule.prototype.__options__ = options;
-  return VuexModule as typeof VuexModule;
+  return vuexModule as typeof VuexModule;
 
 }
 

@@ -11,7 +11,6 @@ var __assign = (this && this.__assign) || function () {
 };
 //@ts-ignore
 import getDescriptors from "object.getownpropertydescriptors";
-import { VuexModule } from "./interfaces";
 import { isFieldASubModule, extractVuexSubModule } from "./submodule";
 import { createLocalProxy } from './proxy';
 import { toCamelCase } from "./utils";
@@ -25,7 +24,7 @@ export function createModule(options) {
      */
     var vuexModule = new Function();
     vuexModule.prototype.__options__ = options;
-    return VuexModule;
+    return vuexModule;
 }
 function initializeModuleInternals(cls) {
     cls.prototype.__namespacedPath__ = "";

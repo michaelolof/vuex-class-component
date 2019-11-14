@@ -16,7 +16,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 //@ts-ignore
 var object_getownpropertydescriptors_1 = __importDefault(require("object.getownpropertydescriptors"));
-var interfaces_1 = require("./interfaces");
 var submodule_1 = require("./submodule");
 var proxy_1 = require("./proxy");
 var utils_1 = require("./utils");
@@ -30,7 +29,7 @@ function createModule(options) {
      */
     var vuexModule = new Function();
     vuexModule.prototype.__options__ = options;
-    return interfaces_1.VuexModule;
+    return vuexModule;
 }
 exports.createModule = createModule;
 function initializeModuleInternals(cls) {
