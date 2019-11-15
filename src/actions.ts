@@ -18,10 +18,10 @@ export function action(...params:any[]) {
   
   if( firstParam === undefined ) return handleMutateActionMode;
   
-  if( firstParam instanceof VuexModule || firstParam instanceof LegacyVuexModule ) { 
+  if( firstParam instanceof VuexModule || firstParam instanceof LegacyVuexModule || typeof firstParam === "object" ) { 
     return handleMutateActionMode( firstParam, params[ 1 ], params[ 2 ] )
   }
-  
+  //@ts-ignore
   switch( firstParam.mode ) {
     case "raw": return handleRawActionMode;
     case "mutate": return handleMutateActionMode;
@@ -34,7 +34,7 @@ export function getRawActionContext<T extends VuexModule, R>( thisArg:ThisType<T
   return thisArg as ActionContext<T, R>
 }
 
-function handleMutateActionMode(target:VuexModule, key:string, descriptor:ActionDescriptor) {
+function handleMutateActionMode(target:VuexModule | object, key:string, descriptor:ActionDescriptor) {
 
   initializeActionsCache( target );
   

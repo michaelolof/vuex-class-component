@@ -1,4 +1,4 @@
-import { VuexModuleConstructor, VuexModule, VuexModuleAddons, Map } from "./interfaces";
+import { VuexModuleConstructor, VuexModuleAddons, Map } from "./interfaces";
 import { createModule, extractVuexModule } from "./module";
 import { createProxy, clearProxyCache } from './proxy';
 import { createSubModule } from './submodule';
@@ -8,6 +8,8 @@ const defaultModuleOptions :ModuleOptions = {
   namespacedPath: "",
   target: "core",
 }
+
+class VuexModule {}
 
 export function Module({ namespacedPath = "", target = "core" as VuexModuleTarget } = defaultModuleOptions ) {
 
@@ -51,15 +53,15 @@ export class LegacyVuexModule {
   }
 
   static CreateProxy<T extends typeof VuexModule>( $store :Map, cls :T ) {
-    return createProxy( $store, cls );
+    return createProxy( $store, cls as any );
   }
 
   static CreateSubModule<T extends typeof VuexModule>( cls :T ) {
-    return createSubModule( cls );
+    return createSubModule( cls as any );
   }
 
   static ClearProxyCache( cls :typeof VuexModule ) {
-    return clearProxyCache( cls );
+    return clearProxyCache( cls as any );
   }
 }
 

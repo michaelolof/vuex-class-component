@@ -6,6 +6,11 @@ var defaultModuleOptions = {
     namespacedPath: "",
     target: "core",
 };
+var VuexModule = /** @class */ (function () {
+    function VuexModule() {
+    }
+    return VuexModule;
+}());
 export function Module(_a) {
     var _b = _a === void 0 ? defaultModuleOptions : _a, _c = _b.namespacedPath, namespacedPath = _c === void 0 ? "" : _c, _d = _b.target, target = _d === void 0 ? "core" : _d;
     return function (module) {

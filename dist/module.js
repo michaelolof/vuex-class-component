@@ -29,9 +29,33 @@ function createModule(options) {
      */
     var vuexModule = new Function();
     vuexModule.prototype.__options__ = options;
+    vuexModule.With = defineWithExtension;
     return vuexModule;
 }
 exports.createModule = createModule;
+function defineWithExtension(options) {
+    // Get the old vuex options
+    var oldOptions = this.prototype.__options__ = {};
+    // create a new module constructor
+    var newVuexModule = new Function();
+    newVuexModule.prototype.__options__ = {};
+    // assign all the old options to the new module constructor
+    Object.assign(newVuexModule.prototype.__options__, oldOptions);
+    // If there are no new vuex options return as is.
+    if (options === undefined)
+        return newVuexModule;
+    // Assign or new available vuex options to the new vuex module
+    var prototypeOptions = newVuexModule.prototype.__options__ || {};
+    if (options.namespaced)
+        prototypeOptions.namespaced = options.namespaced;
+    if (options.strict)
+        prototypeOptions.strict = options.strict;
+    if (options.target)
+        prototypeOptions.target = options.target;
+    if (options.enableLocalWatchers)
+        prototypeOptions.enableLocalWatchers = options.enableLocalWatchers;
+    return newVuexModule;
+}
 function initializeModuleInternals(cls) {
     cls.prototype.__namespacedPath__ = "";
     cls.prototype.__vuex_module_cache__ = undefined;

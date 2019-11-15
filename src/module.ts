@@ -17,10 +17,37 @@ export function createModule( options ?:VuexModuleOptions ) {
    */
   const vuexModule = new Function() as VuexModuleConstructor;
   vuexModule.prototype.__options__ = options;
+  vuexModule.With = defineWithExtension;
+
   return vuexModule as typeof VuexModule;
 
 }
 
+function defineWithExtension( this:typeof VuexModule & VuexModuleConstructor, options?: VuexModuleOptions ) {
+
+  // Get the old vuex options
+  const oldOptions = this.prototype.__options__ = {};
+  
+  // create a new module constructor
+  const newVuexModule = new Function() as VuexModuleConstructor;
+  newVuexModule.prototype.__options__ = {};
+  
+  // assign all the old options to the new module constructor
+  Object.assign( newVuexModule.prototype.__options__, oldOptions );
+
+  // If there are no new vuex options return as is.
+  if( options === undefined ) return newVuexModule as typeof VuexModule;
+
+  // Assign or new available vuex options to the new vuex module
+  const prototypeOptions = newVuexModule.prototype.__options__ || {};
+  if( options.namespaced )  prototypeOptions.namespaced = options.namespaced;
+  if( options.strict )  prototypeOptions.strict = options.strict;
+  if( options.target )  prototypeOptions.target = options.target;
+  if( options.enableLocalWatchers )  prototypeOptions.enableLocalWatchers = options.enableLocalWatchers;
+
+  return newVuexModule as typeof VuexModule;
+
+}
 
 function initializeModuleInternals( cls: VuexModuleConstructor ) {
   cls.prototype.__namespacedPath__ = "";

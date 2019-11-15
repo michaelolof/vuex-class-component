@@ -16,9 +16,10 @@ function action() {
     var firstParam = params[0];
     if (firstParam === undefined)
         return handleMutateActionMode;
-    if (firstParam instanceof interfaces_1.VuexModule || firstParam instanceof module_legacy_1.LegacyVuexModule) {
+    if (firstParam instanceof interfaces_1.VuexModule || firstParam instanceof module_legacy_1.LegacyVuexModule || typeof firstParam === "object") {
         return handleMutateActionMode(firstParam, params[1], params[2]);
     }
+    //@ts-ignore
     switch (firstParam.mode) {
         case "raw": return handleRawActionMode;
         case "mutate": return handleMutateActionMode;

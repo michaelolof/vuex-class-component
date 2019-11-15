@@ -1,11 +1,13 @@
-import { VuexModule, VuexModuleAddons, Map } from "./interfaces";
+import { VuexModuleAddons, Map } from "./interfaces";
+declare class VuexModule {
+}
 export declare function Module({ namespacedPath, target }?: ModuleOptions): (module: unknown) => void;
 export interface LegacyVuexModule extends VuexModuleAddons {
 }
 export declare class LegacyVuexModule {
     static ExtractVuexModule(cls: typeof VuexModule): import("./interfaces").VuexObject;
-    static CreateProxy<T extends typeof VuexModule>($store: Map, cls: T): import("./interfaces").ProxyWatchers & InstanceType<T>;
-    static CreateSubModule<T extends typeof VuexModule>(cls: T): InstanceType<T>;
+    static CreateProxy<T extends typeof VuexModule>($store: Map, cls: T): any;
+    static CreateSubModule<T extends typeof VuexModule>(cls: T): any;
     static ClearProxyCache(cls: typeof VuexModule): void;
 }
 export declare type VuexModuleTarget = "core" | "nuxt";

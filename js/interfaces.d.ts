@@ -11,6 +11,7 @@ export interface VuexModuleAddons {
 export interface VuexModule extends VuexModuleAddons {
 }
 export declare class VuexModule {
+    static With(options?: VuexModuleOptions): typeof VuexModule;
 }
 export declare type VuexModuleConstructor = typeof VuexModule & VuexModuleInternals;
 export interface VuexModuleInternals {
