@@ -171,13 +171,12 @@ We can even do better with Local watchers and subscribers.
 
 ```ts
 const VuexModule = createModule({
-  namespaced: true,
   strict: false,
   target: "nuxt",
   enableLocalWatchers: true,
 })
 
-export class UserStore extends VuexModule {
+export class UserStore extends VuexModule.With({ namespaced: "user" }) {
   
   firstname = "John";
   lastname = "Doe";
@@ -211,7 +210,11 @@ export class UserStore extends VuexModule {
 ## SubModules Support 
 To use submodules
 ```ts
-  class CarStore extends createModule({}) {
+  const VuexModule = createModule({
+    strict: false
+  })
+
+  class CarStore extends VuexModule.With({ namespaced: "car" }) {
     @getter noOfWheels = 4;
 
     @action drive() {
@@ -221,7 +224,7 @@ To use submodules
 ```
 We could use this sub module in a class
 ```ts
-  class Vehicle extends createModule({}) {
+  class VehicleStore extends VuexModule.With({ namespaced: "vehicle" }) {
     car = createSubModule( CarStore );
   }
 ```
@@ -251,7 +254,7 @@ import { Module, VuexModule, getter, action } from "vuex-class-component/js";
 From verison `1.6.0` Nuxt is also supported.
 To use `vuex-class-component` with Nuxt, You add a `target` property to the @Module decorator and set it to `"nuxt"`.
 ```js
-export class UserStore extends createSubModule({ target: "nuxt" }) {
+export class UserStore extends createModule({ target: "nuxt" }) {
   ...
 }
 ```
