@@ -15,7 +15,8 @@ export function createModule( options ?:VuexModuleOptions ) {
    * We do it like this because we don't want intelissense to pick up the
    * options variable as it is an internal variable.
    */
-  const vuexModule = new Function() as VuexModuleConstructor;
+  //@ts-ignore
+  const vuexModule = function(){} as VuexModuleConstructor;
   vuexModule.prototype.__options__ = options;
   vuexModule.With = defineWithExtension;
 
@@ -29,7 +30,8 @@ function defineWithExtension( this:typeof VuexModule & VuexModuleConstructor, op
   const oldOptions = this.prototype.__options__ = {};
   
   // create a new module constructor
-  const newVuexModule = new Function() as VuexModuleConstructor;
+  //@ts-ignore
+  const newVuexModule = function(){} as VuexModuleConstructor;
   newVuexModule.prototype.__options__ = {};
   
   // assign all the old options to the new module constructor

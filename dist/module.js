@@ -27,7 +27,8 @@ function createModule(options) {
      * We do it like this because we don't want intelissense to pick up the
      * options variable as it is an internal variable.
      */
-    var vuexModule = new Function();
+    //@ts-ignore
+    var vuexModule = function () { };
     vuexModule.prototype.__options__ = options;
     vuexModule.With = defineWithExtension;
     return vuexModule;
@@ -37,7 +38,8 @@ function defineWithExtension(options) {
     // Get the old vuex options
     var oldOptions = this.prototype.__options__ = {};
     // create a new module constructor
-    var newVuexModule = new Function();
+    //@ts-ignore
+    var newVuexModule = function () { };
     newVuexModule.prototype.__options__ = {};
     // assign all the old options to the new module constructor
     Object.assign(newVuexModule.prototype.__options__, oldOptions);
