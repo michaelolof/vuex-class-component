@@ -150,17 +150,17 @@ Vuex today has additional functionalities like `$watch` `$subscribe` and `$subSc
 
 This also possible with `vuex-class-component`
 ```ts
-// Watch getters in vuex components
+// Watch getters in Vue components
 vxm.user.$watch( "fullname", newVal => { 
   console.log( `Fullname has changed: ${newVal}` )
 });
 
-// Subscribe to mutations in vuex components 
+// Subscribe to mutations in Vue components 
 vxm.user.$subscribe( "clearName", payload => {
   console.log( `clearName was called. payload: ${payload}` )
 });
 
-// Subscribe to an action in vuex components
+// Subscribe to an action in Vue components
 vxm.user.$subscribeAction( "doSomethingAsync", {
   before: (payload :any) => console.log( payload ),
   after: (payload :any) => console.log( payload ),
