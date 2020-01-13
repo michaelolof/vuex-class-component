@@ -38,7 +38,7 @@ const user = {
 ```
 
 ```ts
-import { createModule, mutation, action, extractVuexModule } from "vuex-class-component";
+import { createModule, mutation, action, extractVuexModule, createProxy } from "vuex-class-component";
 
 const VuexModule = createModule({
   namespaced: "user",
