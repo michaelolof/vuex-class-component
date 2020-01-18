@@ -70,8 +70,8 @@ export interface ProxyWatchers {
         deep: boolean;
         immediate: boolean;
     }): () => void;
-    $subscribe(mutationfield: string, callback: (payload: any) => void): void;
-    $subscribeAction(actionField: string, callbackOrObj: SubScribeActionCallback | SubScribeActionObject): void;
+    $subscribe(mutationfield: string, callback: (payload: any) => void): () => void;
+    $subscribeAction(actionField: string, callbackOrObj: SubScribeActionCallback | SubScribeActionObject): () => void;
 }
 declare type SubScribeActionCallback = (payload: any) => void;
 declare type SubScribeActionObject = {
