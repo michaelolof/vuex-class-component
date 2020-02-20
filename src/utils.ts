@@ -3,6 +3,7 @@ export function toCamelCase(str :string){
 }
 
 export function getClassPath( path :string ) {
+  if (!path) { return ''; }
   const arr = path.split( "/" );
   return arr[ arr.length - 1 ];
 }
