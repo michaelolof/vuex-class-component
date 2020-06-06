@@ -96,9 +96,9 @@ export interface ProxyWatchers {
   $subscribe (
     mutationfield :string,
     callback :( payload :any ) => void,
-  ) :void
+  ) :() => void
 
-  $subscribeAction ( actionField :string, callbackOrObj :SubScribeActionCallback | SubScribeActionObject ) :void
+  $subscribeAction ( actionField :string, callbackOrObj :SubScribeActionCallback | SubScribeActionObject ) :() => void
 
 }
 
