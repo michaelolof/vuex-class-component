@@ -90,7 +90,7 @@ describe('ExtractVuexModule', () => {
 	it('should extract all properties as state in a function for NuxtUserStore', () => {
 		const { state } = NuxtUserStore.ExtractVuexModule( NuxtUserStore );
 		expect( typeof state ).toBe( "function" );
-		expect( state() ).toEqual({
+		expect( (state as Function)() ).toEqual({
 			firstname: "Michael",
 			lastname: "Olofinjana",
 			speciality: "JavaScript",
@@ -103,7 +103,7 @@ describe('ExtractVuexModule', () => {
 		const { getters } = UserStore.ExtractVuexModule(UserStore)
 		// Note all states are automatically accessible as getters.
 		// This makes th `@getter` decorator redundant. But we have it for backwards compatibility.
-		expect(Object.keys(getters)).toEqual([ 'fullName', `__${UserStore.name.toLowerCase()}_internal_getter__` ])
+		expect(Object.keys(getters)).toEqual([ 'fullName', 'speciality', 'occupation', `__${UserStore.name.toLowerCase()}_internal_getter__` ])
 	})
 
 	it('should extract all actions', () => {

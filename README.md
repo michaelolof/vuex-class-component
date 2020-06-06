@@ -92,7 +92,7 @@ export const store = new Vuex.Store({
 
 // Creating proxies.
 const vxm = {
-  user: createProxy( UserStore ),
+  user: createProxy( store, UserStore ),
 }
 ```
 

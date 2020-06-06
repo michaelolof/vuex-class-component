@@ -1,4 +1,4 @@
-import { extractVuexModule } from "./module";
+import { extractVuexModule, getNamespacedPath } from "./module";
 import { VuexModuleConstructor, Map, VuexModule, ProxyWatchers } from "./interfaces";
 import { getClassPath, toCamelCase, refineNamespacedPath } from "./utils";
 
@@ -36,7 +36,7 @@ export function createProxy<T extends typeof VuexModule>( $store :any, cls :T ) 
     // If field is a getter use the normal getter path if not use internal getters.
     if( typeof field === "string" && getterNames.indexOf( field ) > -1 ) {
       return $store.watch( 
-        () => $store.getters[ namespacedPath +  field ],
+        () => ($store.rootGetters || $store.getters)[ namespacedPath +  field ],
         callback,
         options,
       )
@@ -45,7 +45,7 @@ export function createProxy<T extends typeof VuexModule>( $store :any, cls :T ) 
     const className = cls.name.toLowerCase();
 
     return $store.watch( 
-      () => $store.getters[ namespacedPath + `__${className}_internal_getter__`]( field ),
+      () => ($store.rootGetters || $store.getters)[ namespacedPath + `__${className}_internal_getter__`]( field ),
       callback,
       options,
     )
@@ -251,13 +251,13 @@ function createLocalWatchers( cls :VuexModuleConstructor, $store :Map, namespace
 
     if( fieldIsAnExplicitGetter ) {
       $store.watch( 
-        () => $store.getters[ namespacedPath + field ],
+        () => ($store.rootGetters || $store.getters)[ namespacedPath + field ],
         proxiedWatchFunc,
       )
     }
     else { // This is so we can also watch implicit getters.
       $store.watch( 
-        () => $store.getters[ namespacedPath + `__${className}_internal_getter__` ]( field ),
+        () => ($store.rootGetters || $store.getters)[ namespacedPath + `__${className}_internal_getter__` ]( field ),
         proxiedWatchFunc,
       )
     }
@@ -270,7 +270,8 @@ function createSubModuleProxy( $store :Map, cls:VuexModuleConstructor, proxy :Ma
   const store = cls.prototype.__store_cache__ || $store;
   for( let field in modules ) {
     const subModuleClass = cls.prototype.__submodules_cache__[ field ] as VuexModuleConstructor;
-    subModuleClass.prototype.__namespacedPath__ = cls.prototype.__namespacedPath__ + "/" + subModuleClass.prototype.__namespacedPath__;
+    const namespacedPath = getNamespacedPath(subModuleClass);
+    subModuleClass.prototype.__namespacedPath__ = cls.prototype.__namespacedPath__ + "/" + namespacedPath;
     proxy[ field ] = createProxy( store, subModuleClass );
   }
 
@@ -310,17 +311,19 @@ function createGettersAndMutationProxyFromState({ cls, proxy, state, $store, nam
           get: () => { 
             // When creating local proxies getters doesn't exist on that context, so we have to account
             // for that.
-            if( $store.getters ) { 
-              return $store.getters[ namespacedPath + `__${className}_internal_getter__` ]( path )
+            const getters = $store.rootGetters || $store.getters;
+            if( getters ) {
+              const getterPath = refineNamespacedPath(cls.prototype.__namespacedPath__) + `__${className}_internal_getter__`;
+              return getters[ getterPath ]( path )
             }else return $store[ `__${className}_internal_getter__` ]( path ) 
           },
           set: payload => { 
             const commit = $store.commit || cls.prototype.__store_cache__.commit;
-            if( commit ) commit( refineNamespacedPath( cls.prototype.__namespacedPath__ ) + `__${className}_internal_mutator__`, { field: path, payload });
+            if( commit ) commit( refineNamespacedPath( cls.prototype.__namespacedPath__ ) + `__${className}_internal_mutator__`, { field: path, payload }, { root: true });
             else {
               // We must be creating local proxies hence, $store.commit doesn't exist
               const store = cls.prototype.__context_store__!;
-              store.commit( `__${className}_internal_mutator__`, { field: path, payload })
+              store.commit( `__${className}_internal_mutator__`, { field: path, payload }, { root: true })
             }
           },
         })
@@ -401,7 +404,7 @@ function __createGettersAndMutationProxyFromState({ cls, proxy, state, $store, n
           else {
             // We must be creating local proxies hence, $store.commit doesn't exist
             const store = cls.prototype.__context_store__!;
-            store.commit( `__${className}_internal_mutator__`, { field, payload })
+            store.commit( `__${className}_internal_mutator__`, { field, payload }, { root: true })
           }
         },
       })
@@ -437,7 +440,7 @@ function createExplicitMutationsProxy( cls :VuexModuleConstructor, proxy :Map, $
   );
 
   for( let field in mutations ) {
-    proxy[ field ] = ( payload :any ) => commit( namespacedPath + field, payload )
+    proxy[ field ] = ( payload :any ) => commit( namespacedPath + field, payload, { root: true } )
   }
 
 }
@@ -465,21 +468,23 @@ function createGettersAndGetterMutationsProxy({ cls, getters, mutations, proxy, 
       
       Object.defineProperty( proxy, field, {
         get: () => {
-          if( $store.getters ) return $store.getters[ namespacedPath + field ]
+          const storeGetters = namespacedPath ? $store.rootGetters : $store.getters;
+          if( storeGetters ) return storeGetters[ namespacedPath + field ]
           else return $store[ namespacedPath + field ];
         },
-        set: ( payload :any ) => $store.commit( namespacedPath + field, payload ),
+        set: ( payload :any ) => $store.commit( namespacedPath + field, payload, { root: !!namespacedPath } ),
       })
       
       continue;
     }
     
     // The field has only a getter.
-    if( proxy[ field ] ) continue;
+    if( Object.prototype.hasOwnProperty.call(proxy, field) ) continue;
     
     Object.defineProperty( proxy, field, {
       get: () => { 
-        if( $store.getters ) return $store.getters[ namespacedPath + field ];
+        const storeGetters = $store.rootGetters || $store.getters;
+        if( storeGetters ) return storeGetters[ namespacedPath + field ];
         else return $store[ namespacedPath + field ];
       }
     })
