@@ -36,7 +36,7 @@ export function createProxy<T extends typeof VuexModule>( $store :any, cls :T ) 
     // If field is a getter use the normal getter path if not use internal getters.
     if( typeof field === "string" && getterNames.indexOf( field ) > -1 ) {
       return $store.watch( 
-        () => ($store.rootGetters || $store.getters)[ namespacedPath +  field ],
+        () => (namespacedPath ? $store.rootGetters : $store.getters)[ namespacedPath +  field ],
         callback,
         options,
       )
@@ -45,7 +45,7 @@ export function createProxy<T extends typeof VuexModule>( $store :any, cls :T ) 
     const className = cls.name.toLowerCase();
 
     return $store.watch( 
-      () => ($store.rootGetters || $store.getters)[ namespacedPath + `__${className}_internal_getter__`]( field ),
+      () => (namespacedPath ? $store.rootGetters : $store.getters)[ namespacedPath + `__${className}_internal_getter__`]( field ),
       callback,
       options,
     )
@@ -251,13 +251,13 @@ function createLocalWatchers( cls :VuexModuleConstructor, $store :Map, namespace
 
     if( fieldIsAnExplicitGetter ) {
       $store.watch( 
-        () => ($store.rootGetters || $store.getters)[ namespacedPath + field ],
+        () => (namespacedPath ? $store.rootGetters : $store.getters)[ namespacedPath + field ],
         proxiedWatchFunc,
       )
     }
     else { // This is so we can also watch implicit getters.
       $store.watch( 
-        () => ($store.rootGetters || $store.getters)[ namespacedPath + `__${className}_internal_getter__` ]( field ),
+        () => (namespacedPath ? $store.rootGetters : $store.getters)[ namespacedPath + `__${className}_internal_getter__` ]( field ),
         proxiedWatchFunc,
       )
     }
@@ -311,7 +311,7 @@ function createGettersAndMutationProxyFromState({ cls, proxy, state, $store, nam
           get: () => { 
             // When creating local proxies getters doesn't exist on that context, so we have to account
             // for that.
-            const getters = $store.rootGetters || $store.getters;
+            const getters = cls.prototype.__namespacedPath__ ? $store.rootGetters : $store.getters;
             if( getters ) {
               const getterPath = refineNamespacedPath(cls.prototype.__namespacedPath__) + `__${className}_internal_getter__`;
               return getters[ getterPath ]( path )
@@ -483,9 +483,11 @@ function createGettersAndGetterMutationsProxy({ cls, getters, mutations, proxy, 
     
     Object.defineProperty( proxy, field, {
       get: () => { 
-        const storeGetters = $store.rootGetters || $store.getters;
-        if( storeGetters ) return storeGetters[ namespacedPath + field ];
-        else return $store[ namespacedPath + field ];
+        const storeGetters = namespacedPath ? $store.rootGetters : $store.getters;
+        if (storeGetters)
+            return storeGetters[ namespacedPath + field ];
+        else
+            return $store[ namespacedPath + field ];
       }
     })
 
