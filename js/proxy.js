@@ -195,7 +195,6 @@ function createSubModuleProxy($store, cls, proxy, modules) {
     var store = cls.prototype.__store_cache__ || $store;
     for (var field in modules) {
         var subModuleClass = cls.prototype.__submodules_cache__[field];
-        subModuleClass.prototype.__namespacedPath__ = cls.prototype.__namespacedPath__ + "/" + subModuleClass.prototype.__namespacedPath__;
         proxy[field] = createProxy(store, subModuleClass);
     }
 }
