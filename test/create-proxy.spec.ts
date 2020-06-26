@@ -2,7 +2,7 @@
 import Vuex, {Store} from 'vuex'
 // @ts-ignore
 import { createLocalVue } from '@vue/test-utils'
-import { Module, VuexModule, getter, mutation, action, getRawActionContext } from '../src'
+import { getter, mutation, action, getRawActionContext, createModule, createProxy, clearProxyCache, createSubModule, extractVuexModule } from '../src'
 
 
 interface Name {
@@ -10,8 +10,7 @@ interface Name {
 	lastname:string
 }
 
-@Module({ namespacedPath: 'user/settings/' })
-class UserSettings extends VuexModule {
+class UserSettings extends createModule({ namespaced: 'user/settings/' }) {
 	@getter cookieConsent = false
 
 	@mutation changeConsent(consent: boolean) {
@@ -19,13 +18,11 @@ class UserSettings extends VuexModule {
 	}
 }
 
-@Module({ namespacedPath: 'user/something/'})
-class Something extends VuexModule {
+class Something extends createModule({ namespaced: 'user/something/' }) {
 	something = 'nothing'
 }
 
-@Module({ namespacedPath: 'books/' })
-class Books extends VuexModule{
+class Books extends createModule({ namespaced: 'books/' }) {
 	books: string[] = []
 
 	@mutation addBook(book: string) {
@@ -33,11 +30,10 @@ class Books extends VuexModule{
 	}
 }
 
-@Module({ namespacedPath: 'user/' })
-class UserStore extends VuexModule {
+class UserStore extends createModule({ namespaced: 'user/' })  {
 
-	settings = UserSettings.CreateSubModule(UserSettings)
-	something = Something.CreateSubModule(Something)
+	settings = createSubModule(UserSettings)
+	something = createSubModule(Something)
 
 	firstname = 'Michael'
 	lastname = 'Olofinjana'
@@ -67,7 +63,7 @@ class UserStore extends VuexModule {
 	}
 
 	@action async addBook(book: string) {
-		const booksProxy = Books.CreateProxy(this.$store, Books)
+		const booksProxy = createProxy(this.$store, Books)
 		booksProxy.addBook(book)
 	}
 
@@ -96,17 +92,18 @@ describe('CreateProxy', () => {
 		localVue.use(Vuex)
 		store = new Store({
 			modules: {
-				user: UserStore.ExtractVuexModule(UserStore)
+				...extractVuexModule(UserStore)
 			}
 		})
+		// console.log('New store with UserStore', store.getters)
 	})
 
 	afterEach(() => {
-		UserStore.ClearProxyCache(UserStore)
+		clearProxyCache(UserStore)
 	})
 
 	it('should proxy getters', () => {
-		const user = UserStore.CreateProxy(store, UserStore);
+		const user = createProxy(store, UserStore);
 
 		expect(user.fullName).toEqual('Michael Olofinjana')
 		expect(user.specialty).toEqual('JavaScript')
@@ -114,7 +111,7 @@ describe('CreateProxy', () => {
 	})
 
 	it('should proxy state', () => {
-		const user = UserStore.CreateProxy(store, UserStore)
+		const user = createProxy(store, UserStore)
 
 		expect(user.firstname).toEqual('Michael')
 		expect(user.lastname).toEqual('Olofinjana')
@@ -122,7 +119,7 @@ describe('CreateProxy', () => {
 
 	it('should proxy actions', async () => {
 
-		const user = UserStore.CreateProxy(store, UserStore)
+		const user = createProxy(store, UserStore)
 
 		await user.doAnotherAsyncStuff('Something')
 
@@ -141,7 +138,7 @@ describe('CreateProxy', () => {
 	})
 
 	it('should proxy mutations', async () => {
-		const user = UserStore.CreateProxy(store, UserStore)
+		const user = createProxy(store, UserStore)
 
 		await user.changeName({ firstname: 'Ola', lastname: 'Nordmann' })
 
