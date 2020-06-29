@@ -2,7 +2,17 @@ import { extractVuexModule, getNamespacedPath } from "./module";
 import { VuexModuleConstructor, Map, VuexModule, ProxyWatchers } from "./interfaces";
 import { getClassPath, toCamelCase, refineNamespacedPath } from "./utils";
 
-export function clearProxyCache<T extends typeof VuexModule>( cls :T ) {}
+export function clearProxyCache<T extends typeof VuexModule>( cls :T ) {
+  //@ts-ignore
+  const VuexClass = cls as VuexModuleConstructor
+  delete VuexClass.prototype.__vuex_module_cache__
+  delete VuexClass.prototype.__vuex_proxy_cache__
+  delete VuexClass.prototype.__store_cache__
+  delete VuexClass.prototype.__vuex_local_proxy_cache__
+  for (const submodule of Object.values(VuexClass.prototype.__submodules_cache__)) {
+    clearProxyCache(submodule)
+  }
+}
 
 export function createProxy<T extends typeof VuexModule>( $store :any, cls :T ) :ProxyWatchers & InstanceType<T> {
   //@ts-ignore
