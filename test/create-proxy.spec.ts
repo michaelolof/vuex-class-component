@@ -20,6 +20,13 @@ class UserSettings extends createModule({ namespaced: 'user/settings/' }) {
 
 class Something extends createModule({ namespaced: 'user/something/' }) {
 	something = 'nothing'
+	nested = {
+		test: "test",
+		deep: {
+			test: "deep test",
+			valid: true
+		}
+	}
 }
 
 class Books extends createModule({ namespaced: 'books/' }) {
@@ -37,6 +44,16 @@ class UserStore extends createModule({ namespaced: 'user/', strict: false })  {
 
 	firstname = 'Michael'
 	lastname = 'Olofinjana'
+	nullField: string | null = null
+	description = {
+		fingers: 10,
+		arms: 2,
+		hungry: true,
+		head: {
+			eyes: 2,
+			hairs: "brown"
+		}
+	}
 	@getter specialty = 'JavaScript' // The @getter decorator automatically exposes a defined state as a getter.
 	@getter occupation = 'Developer'
 
@@ -115,6 +132,7 @@ describe('CreateProxy', () => {
 
 		expect(user.firstname).toEqual('Michael')
 		expect(user.lastname).toEqual('Olofinjana')
+		expect(user.nullField).toEqual(null)
 	})
 
 	it('should proxy actions', async () => {
@@ -153,10 +171,54 @@ describe('CreateProxy', () => {
 
 		expect(user.firstname).toEqual('Michael')
 		expect(user.lastname).toEqual('Olofinjana')
+		expect(user.nullField).toEqual(null)
+
 		user.firstname = 'Ola'
 		user.lastname = 'Nordmann'
+		user.nullField = 'not null'
 		expect(user.firstname).toEqual('Ola')
 		expect(user.lastname).toEqual('Nordmann')
+		expect(user.nullField).toEqual('not null')
+	})
+
+	it('should proxy objects recursively', () => {
+		const user = createProxy(store, UserStore)
+
+		expect(user.description.arms).toEqual(2)
+		expect(user.description.fingers).toEqual(10)
+		expect(user.description.hungry).toEqual(true)
+		expect(user.description.head.eyes).toEqual(2)
+		expect(user.description.head.hairs).toEqual("brown")
+
+		user.description.hungry = false
+		expect(user.description.hungry).toEqual(false)
+
+		user.description.head.hairs = "blond"
+		expect(user.description.head.hairs).toEqual("blond")
+	})
+
+	it('should proxy submodule', () => {
+		const user = createProxy(store, UserStore)
+
+		expect(user.settings.cookieConsent).toEqual(false)
+		expect(user.something.something).toEqual("nothing")
+		expect(user.something.nested.test).toEqual("test")
+		expect(user.something.nested.deep.test).toEqual("deep test")
+		expect(user.something.nested.deep.valid).toEqual(true)
+
+		user.settings.changeConsent(true)
+		expect(user.settings.cookieConsent).toEqual(true)
+
+		user.something.something = "more than nothing"
+		expect(user.something.something).toEqual("more than nothing")
+
+		user.something.nested.test = "nested change"
+		expect(user.something.nested.test).toEqual("nested change")
+
+		user.something.nested.deep.test = "nested deep change"
+		user.something.nested.deep.valid = false
+		expect(user.something.nested.deep.test).toEqual("nested deep change")
+		expect(user.something.nested.deep.valid).toEqual(false)
 	})
 
 })

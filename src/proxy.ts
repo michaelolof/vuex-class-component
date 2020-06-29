@@ -287,7 +287,7 @@ function createSubModuleProxy( $store :Map, cls:VuexModuleConstructor, proxy :Ma
 
 }
 
-function createGettersAndMutationProxyFromState({ cls, proxy, state, $store, namespacedPath = "", currentField = "", maxDepth = 1 }: { cls: VuexModuleConstructor, proxy: Map; state: Map; $store: any; namespacedPath?: string; currentField?: string; maxDepth ?:number}) {
+function createGettersAndMutationProxyFromState({ cls, proxy, state, $store, namespacedPath = "", currentField = "", maxDepth = 12 }: { cls: VuexModuleConstructor, proxy: Map, state: Map, $store: any, namespacedPath?: string, currentField?: string, maxDepth ?:number}) {
   /**
    * 1. Go through all fields in the object and check the values of those fields. 
    *  
@@ -313,7 +313,7 @@ function createGettersAndMutationProxyFromState({ cls, proxy, state, $store, nam
     if (currentField.length && !currentField.endsWith(".")) currentField += ".";
     const path = currentField + field;
 
-    if ( maxDepth === 0 || typeof value !== "object" || (typeof value === 'object' && !fieldIsSubmodule) ) {
+    if ( maxDepth === 0 || typeof value !== 'object' || value === null ) {
 
       const getter = () => { 
         // When creating local proxies getters doesn't exist on that context, so we have to account
