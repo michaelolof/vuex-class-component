@@ -30,7 +30,7 @@ class Books extends createModule({ namespaced: 'books/' }) {
 	}
 }
 
-class UserStore extends createModule({ namespaced: 'user/' })  {
+class UserStore extends createModule({ namespaced: 'user/', strict: false })  {
 
 	settings = createSubModule(UserSettings)
 	something = createSubModule(Something)
@@ -91,11 +91,11 @@ describe('CreateProxy', () => {
 		localVue = createLocalVue()
 		localVue.use(Vuex)
 		store = new Store({
+			strict: true,
 			modules: {
 				...extractVuexModule(UserStore)
 			}
 		})
-		// console.log('New store with UserStore', store.getters)
 	})
 
 	afterEach(() => {
@@ -144,6 +144,17 @@ describe('CreateProxy', () => {
 
 		expect(user.fullName).toEqual('Ola Nordmann')
 
+		expect(user.firstname).toEqual('Ola')
+		expect(user.lastname).toEqual('Nordmann')
+	})
+
+	it('should proxy non-strict setter in strict mode', () => {
+		const user = createProxy(store, UserStore)
+
+		expect(user.firstname).toEqual('Michael')
+		expect(user.lastname).toEqual('Olofinjana')
+		user.firstname = 'Ola'
+		user.lastname = 'Nordmann'
 		expect(user.firstname).toEqual('Ola')
 		expect(user.lastname).toEqual('Nordmann')
 	})
