@@ -313,7 +313,7 @@ function createGettersAndMutationProxyFromState({ cls, proxy, state, $store, nam
     if (currentField.length && !currentField.endsWith(".")) currentField += ".";
     const path = currentField + field;
 
-    if ( maxDepth === 0 || typeof value !== 'object' || value === null ) {
+    if ( maxDepth === 0 || typeof value !== 'object' || value === null || Array.isArray(value) ) {
 
       const getter = () => {
         // When creating local proxies getters doesn't exist on that context, so we have to account
