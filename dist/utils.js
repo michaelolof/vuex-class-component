@@ -5,6 +5,9 @@ function toCamelCase(str) {
 }
 exports.toCamelCase = toCamelCase;
 function getClassPath(path) {
+    if (!path) {
+        return '';
+    }
     var arr = path.split("/");
     return arr[arr.length - 1];
 }

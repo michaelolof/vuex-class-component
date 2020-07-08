@@ -14,14 +14,13 @@ export function action() {
     var firstParam = params[0];
     if (firstParam === undefined)
         return handleMutateActionMode;
-    if (firstParam instanceof VuexModule || firstParam instanceof LegacyVuexModule || typeof firstParam === "object") {
+    if (firstParam instanceof VuexModule || firstParam instanceof LegacyVuexModule) {
         return handleMutateActionMode(firstParam, params[1], params[2]);
     }
-    //@ts-ignore
     switch (firstParam.mode) {
         case "raw": return handleRawActionMode;
         case "mutate": return handleMutateActionMode;
-        default: return handleMutateActionMode;
+        default: return handleMutateActionMode(firstParam, params[1], params[2]);
     }
 }
 export function getRawActionContext(thisArg) {

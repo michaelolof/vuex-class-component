@@ -103,8 +103,10 @@ function extractVuexModule(cls) {
 exports.extractVuexModule = extractVuexModule;
 function getNamespacedPath(cls) {
     var namespaced = cls.prototype.__options__ && cls.prototype.__options__.namespaced;
-    if (namespaced)
-        cls.prototype.__namespacedPath__ = namespaced.split("/")[0];
+    if (namespaced) {
+        var namePaths = namespaced.split("/");
+        cls.prototype.__namespacedPath__ = namePaths[namePaths.length - 1] || namePaths[namePaths.length - 2];
+    }
     return cls.prototype.__namespacedPath__;
 }
 exports.getNamespacedPath = getNamespacedPath;
