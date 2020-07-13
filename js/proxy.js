@@ -23,10 +23,10 @@ export function createProxy($store, cls) {
         var getterNames = VuexClass.prototype.__explicit_getter_names__;
         // If field is a getter use the normal getter path if not use internal getters.
         if (typeof field === "string" && getterNames.indexOf(field) > -1) {
-            return $store.watch(function () { return (namespacedPath ? $store.rootGetters : $store.getters)[namespacedPath + field]; }, callback, options);
+            return $store.watch(function () { return (namespacedPath ? ($store.rootGetters || $store.getters) : $store.getters)[namespacedPath + field]; }, callback, options);
         }
         var className = cls.name.toLowerCase();
-        return $store.watch(function () { return (namespacedPath ? $store.rootGetters : $store.getters)[namespacedPath + ("__" + className + "_internal_getter__")](field); }, callback, options);
+        return $store.watch(function () { return (namespacedPath ? ($store.rootGetters || $store.getters) : $store.getters)[namespacedPath + ("__" + className + "_internal_getter__")](field); }, callback, options);
     };
     // Setup proxy subscription
     //@ts-ignore
@@ -181,10 +181,10 @@ function createLocalWatchers(cls, $store, namespacedPath) {
             return watchFunc.call(cls.prototype.__vuex_proxy_cache__, newVal, oldVal);
         };
         if (fieldIsAnExplicitGetter) {
-            $store.watch(function () { return (namespacedPath ? $store.rootGetters : $store.getters)[namespacedPath + field_3]; }, proxiedWatchFunc);
+            $store.watch(function () { return (namespacedPath ? ($store.rootGetters || $store.getters) : $store.getters)[namespacedPath + field_3]; }, proxiedWatchFunc);
         }
         else { // This is so we can also watch implicit getters.
-            $store.watch(function () { return (namespacedPath ? $store.rootGetters : $store.getters)[namespacedPath + ("__" + className + "_internal_getter__")](field_3); }, proxiedWatchFunc);
+            $store.watch(function () { return (namespacedPath ? ($store.rootGetters || $store.getters) : $store.getters)[namespacedPath + ("__" + className + "_internal_getter__")](field_3); }, proxiedWatchFunc);
         }
     };
     for (var field_3 in watchMap) {
@@ -230,7 +230,7 @@ function createGettersAndMutationProxyFromState(_a) {
                     get: function () {
                         // When creating local proxies getters doesn't exist on that context, so we have to account
                         // for that.
-                        var getters = cls.prototype.__namespacedPath__ ? $store.rootGetters : $store.getters;
+                        var getters = cls.prototype.__namespacedPath__ ? ($store.rootGetters || $store.getters) : $store.getters;
                         if (getters) {
                             var getterPath = refineNamespacedPath(cls.prototype.__namespacedPath__) + ("__" + className + "_internal_getter__");
                             return getters[getterPath](path);
@@ -368,7 +368,7 @@ function createGettersAndGetterMutationsProxy(_a) {
         if (fieldHasGetterAndMutation) {
             Object.defineProperty(proxy, field, {
                 get: function () {
-                    var storeGetters = namespacedPath ? $store.rootGetters : $store.getters;
+                    var storeGetters = namespacedPath ? ($store.rootGetters || $store.getters) : $store.getters;
                     if (storeGetters)
                         return storeGetters[namespacedPath + field];
                     else
@@ -383,7 +383,7 @@ function createGettersAndGetterMutationsProxy(_a) {
             return "continue";
         Object.defineProperty(proxy, field, {
             get: function () {
-                var storeGetters = namespacedPath ? $store.rootGetters : $store.getters;
+                var storeGetters = namespacedPath ? ($store.rootGetters || $store.getters) : $store.getters;
                 if (storeGetters)
                     return storeGetters[namespacedPath + field];
                 else
