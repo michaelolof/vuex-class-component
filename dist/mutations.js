@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.internalMutator = exports.mutation = void 0;
 /*
  * Define mutation decorator
  */

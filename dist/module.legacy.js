@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.LegacyVuexModule = exports.Module = void 0;
 var module_1 = require("./module");
 var proxy_1 = require("./proxy");
 var submodule_1 = require("./submodule");

@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.internalGetter = void 0;
 exports.internalGetter = function (state, context) { return function (field) {
     var fields = field.split(".");
     switch (fields.length) {

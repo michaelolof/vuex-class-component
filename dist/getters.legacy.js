@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.getter = void 0;
 /*
  * The getter decorator exists just for backward compatibility.
  * Not doing anything.
