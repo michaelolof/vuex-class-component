@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.createSubModule = exports.extractVuexSubModule = exports.isFieldASubModule = void 0;
 var module_1 = require("./module");
 var utils_1 = require("./utils");
 function isFieldASubModule(instance, field) {

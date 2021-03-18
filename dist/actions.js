@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.getRawActionContext = exports.action = exports.internalAction = void 0;
 var interfaces_1 = require("./interfaces");
 var module_legacy_1 = require("./module.legacy");
 /*

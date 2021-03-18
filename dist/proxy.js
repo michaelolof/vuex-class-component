@@ -1,8 +1,20 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports._createProxy = exports.createLocalProxy = exports.createProxy = exports.clearProxyCache = void 0;
 var module_1 = require("./module");
 var utils_1 = require("./utils");
-function clearProxyCache(cls) { }
+function clearProxyCache(cls) {
+    //@ts-ignore
+    var VuexClass = cls;
+    delete VuexClass.prototype.__vuex_module_cache__;
+    delete VuexClass.prototype.__vuex_proxy_cache__;
+    delete VuexClass.prototype.__store_cache__;
+    delete VuexClass.prototype.__vuex_local_proxy_cache__;
+    for (var _i = 0, _a = Object.values(VuexClass.prototype.__submodules_cache__); _i < _a.length; _i++) {
+        var submodule = _a[_i];
+        clearProxyCache(submodule);
+    }
+}
 exports.clearProxyCache = clearProxyCache;
 function createProxy($store, cls) {
     //@ts-ignore
@@ -207,7 +219,7 @@ function createSubModuleProxy($store, cls, proxy, modules) {
     }
 }
 function createGettersAndMutationProxyFromState(_a) {
-    var cls = _a.cls, proxy = _a.proxy, state = _a.state, $store = _a.$store, _b = _a.namespacedPath, namespacedPath = _b === void 0 ? "" : _b, _c = _a.currentField, currentField = _c === void 0 ? "" : _c, _d = _a.maxDepth, maxDepth = _d === void 0 ? 1 : _d;
+    var cls = _a.cls, proxy = _a.proxy, state = _a.state, $store = _a.$store, _b = _a.namespacedPath, namespacedPath = _b === void 0 ? "" : _b, _c = _a.currentField, currentField = _c === void 0 ? "" : _c, _d = _a.maxDepth, maxDepth = _d === void 0 ? 12 : _d;
     /**
      * 1. Go through all fields in the object and check the values of those fields.
      *
@@ -230,20 +242,25 @@ function createGettersAndMutationProxyFromState(_a) {
         if (currentField.length && !currentField.endsWith("."))
             currentField += ".";
         var path = currentField + field;
-        if (maxDepth === 0 || typeof value !== "object" || (typeof value === 'object' && !fieldIsSubmodule)) {
+        if (maxDepth === 0 || typeof value !== 'object' || value === null || Array.isArray(value)) {
+            var getter = function () {
+                // When creating local proxies getters doesn't exist on that context, so we have to account
+                // for that.
+                var getters = namespacedPath ? $store.rootGetters : $store.getters;
+                if (getters === undefined) {
+                    if ($store.getters === undefined) {
+                        namespacedPath = "";
+                        getters = $store;
+                    }
+                    else {
+                        getters = $store.getters;
+                    }
+                }
+                return getters[namespacedPath + "__" + className + "_internal_getter__"](path);
+            };
             if (!strict || fieldIsSubmodule) {
                 Object.defineProperty(proxy, field, {
-                    get: function () {
-                        // When creating local proxies getters doesn't exist on that context, so we have to account
-                        // for that.
-                        var getters = cls.prototype.__namespacedPath__ ? ($store.rootGetters || $store.getters) : $store.getters;
-                        if (getters) {
-                            var getterPath = utils_1.refineNamespacedPath(cls.prototype.__namespacedPath__) + ("__" + className + "_internal_getter__");
-                            return getters[getterPath](path);
-                        }
-                        else
-                            return $store["__" + className + "_internal_getter__"](path);
-                    },
+                    get: getter,
                     set: function (payload) {
                         var commit = $store.commit || cls.prototype.__store_cache__.commit;
                         if (commit)
@@ -258,22 +275,15 @@ function createGettersAndMutationProxyFromState(_a) {
             }
             else {
                 Object.defineProperty(proxy, field, {
-                    get: function () {
-                        // When creating local proxies getters doesn't exist on that context, so we have to account
-                        // for that.
-                        if ($store.getters) {
-                            return $store.getters[namespacedPath + ("__" + className + "_internal_getter__")](path);
-                        }
-                        else
-                            return $store["__" + className + "_internal_getter__"](path);
-                    },
+                    get: getter,
                 });
             }
             return "continue";
         }
         proxy[field] = {};
         createGettersAndMutationProxyFromState({
-            cls: cls, proxy: proxy[field],
+            cls: cls,
+            proxy: proxy[field],
             state: value,
             $store: $store, namespacedPath: namespacedPath,
             currentField: currentField + field,
@@ -370,16 +380,25 @@ function createGettersAndGetterMutationsProxy(_a) {
     var _loop_7 = function (field) {
         if ($store === undefined || proxy[field])
             return "continue";
+        var getter = function () {
+            // When creating local proxies getters doesn't exist on that context, so we have to account
+            // for that.
+            var getters = namespacedPath ? $store.rootGetters : $store.getters;
+            if (getters === undefined) {
+                if ($store.getters === undefined) {
+                    namespacedPath = "";
+                    getters = $store;
+                }
+                else {
+                    getters = $store.getters;
+                }
+            }
+            return getters["" + namespacedPath + field];
+        };
         var fieldHasGetterAndMutation = getterMutations.indexOf(field) > -1;
         if (fieldHasGetterAndMutation) {
             Object.defineProperty(proxy, field, {
-                get: function () {
-                    var storeGetters = namespacedPath ? ($store.rootGetters || $store.getters) : $store.getters;
-                    if (storeGetters)
-                        return storeGetters[namespacedPath + field];
-                    else
-                        return $store[namespacedPath + field];
-                },
+                get: getter,
                 set: function (payload) { return $store.commit(namespacedPath + field, payload, { root: !!namespacedPath }); },
             });
             return "continue";
@@ -388,13 +407,7 @@ function createGettersAndGetterMutationsProxy(_a) {
         if (Object.prototype.hasOwnProperty.call(proxy, field))
             return "continue";
         Object.defineProperty(proxy, field, {
-            get: function () {
-                var storeGetters = namespacedPath ? ($store.rootGetters || $store.getters) : $store.getters;
-                if (storeGetters)
-                    return storeGetters[namespacedPath + field];
-                else
-                    return $store[namespacedPath + field];
-            }
+            get: getter
         });
     };
     for (var field in getters) {
