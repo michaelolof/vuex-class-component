@@ -315,18 +315,25 @@ function createGettersAndMutationProxyFromState({ cls, proxy, state, $store, nam
 
     if ( maxDepth === 0 || typeof value !== "object" || (typeof value === 'object' && !fieldIsSubmodule) ) {
 
+      const getter = () => {
+        // When creating local proxies getters doesn't exist on that context, so we have to account
+        // for that.
+        let getters = namespacedPath ? $store.rootGetters : $store.getters
+        if (getters === undefined) {
+          if ($store.getters === undefined) {
+            namespacedPath = ""
+            getters = $store
+          } else {
+            getters = $store.getters
+          }
+        }
+        return getters[ `${namespacedPath}__${className}_internal_getter__` ]( path )
+      }
+
       if( !strict || fieldIsSubmodule ) {
         
         Object.defineProperty(proxy, field, {
-          get: () => { 
-            // When creating local proxies getters doesn't exist on that context, so we have to account
-            // for that.
-            const getters = cls.prototype.__namespacedPath__ ? ($store.rootGetters || $store.getters) : $store.getters;
-            if( getters ) {
-              const getterPath = refineNamespacedPath(cls.prototype.__namespacedPath__) + `__${className}_internal_getter__`;
-              return getters[ getterPath ]( path )
-            }else return $store[ `__${className}_internal_getter__` ]( path ) 
-          },
+          get: getter,
           set: payload => { 
             const commit = $store.commit || cls.prototype.__store_cache__.commit;
             if( commit ) commit( refineNamespacedPath( cls.prototype.__namespacedPath__ ) + `__${className}_internal_mutator__`, { field: path, payload }, { root: true });
@@ -343,13 +350,7 @@ function createGettersAndMutationProxyFromState({ cls, proxy, state, $store, nam
       else {
 
         Object.defineProperty(proxy, field, {
-          get: () => { 
-            // When creating local proxies getters doesn't exist on that context, so we have to account
-            // for that.
-            if( $store.getters ) { 
-              return $store.getters[ namespacedPath + `__${className}_internal_getter__` ]( path )
-            }else return $store[ `__${className}_internal_getter__` ]( path ) 
-          },
+          get: getter,
         })
 
       }
@@ -473,15 +474,26 @@ function createGettersAndGetterMutationsProxy({ cls, getters, mutations, proxy, 
 
     if( $store === undefined || proxy[ field ] ) continue;
 
+    const getter = () => {
+      // When creating local proxies getters doesn't exist on that context, so we have to account
+      // for that.
+      let getters = namespacedPath ? $store.rootGetters : $store.getters
+      if (getters === undefined) {
+        if ($store.getters === undefined) {
+          namespacedPath = ""
+          getters = $store
+        } else {
+          getters = $store.getters
+        }
+      }
+      return getters[ `${namespacedPath}${field}` ]
+    }
+
     const fieldHasGetterAndMutation = getterMutations.indexOf( field ) > -1;
     if( fieldHasGetterAndMutation ) {
       
       Object.defineProperty( proxy, field, {
-        get: () => {
-          const storeGetters = namespacedPath ? ($store.rootGetters || $store.getters) : $store.getters;
-          if( storeGetters ) return storeGetters[ namespacedPath + field ]
-          else return $store[ namespacedPath + field ];
-        },
+        get: getter,
         set: ( payload :any ) => $store.commit( namespacedPath + field, payload, { root: !!namespacedPath } ),
       })
       
@@ -492,13 +504,7 @@ function createGettersAndGetterMutationsProxy({ cls, getters, mutations, proxy, 
     if( Object.prototype.hasOwnProperty.call(proxy, field) ) continue;
     
     Object.defineProperty( proxy, field, {
-      get: () => { 
-        const storeGetters = namespacedPath ? ($store.rootGetters || $store.getters) : $store.getters;
-        if (storeGetters)
-            return storeGetters[ namespacedPath + field ];
-        else
-            return $store[ namespacedPath + field ];
-      }
+      get: getter
     })
 
   }
