@@ -194,7 +194,8 @@ function extractModulesFromPrototype( cls :VuexModuleConstructor ) {
         const proxy = createLocalProxy( cls, context );
         
         if( proxy[ "$store" ] === undefined ) { 
-          Object.defineProperty( proxy, "$store", { value: context });
+          // @ts-ignore
+          Object.defineProperty( proxy, "$store", { value: this });
         }
 
         return func.call( proxy, payload )
