@@ -169,7 +169,8 @@ function extractModulesFromPrototype(cls) {
                 cls.prototype.__context_store__ = context;
                 var proxy = proxy_1.createLocalProxy(cls, context);
                 if (proxy["$store"] === undefined) {
-                    Object.defineProperty(proxy, "$store", { value: context });
+                    // @ts-ignore
+                    Object.defineProperty(proxy, "$store", { value: this });
                 }
                 return func_1.call(proxy, payload);
             };
