@@ -186,8 +186,8 @@ export class UserStore extends VuexModule.With({ namespaced: "user" }) {
     return this.firstname + " " + this.lastname;
   }
 
-  $watch = {
-    fullname( newValue ) { console.log( `Fullname has changed ${newValue}` },
+  static $watch = {
+    fullname( this: UserStore, newValue ) { console.log( `Fullname has changed ${newValue}` },
   }
 
   $subscribe = {
