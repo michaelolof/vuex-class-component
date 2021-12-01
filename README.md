@@ -68,8 +68,14 @@ export class UserStore extends VuexModule {
   // Explicitly define a vuex getter using class getters.
   get fullname() {
     return this.firstname + " " + this.lastname;
-  } 
-
+  }
+  
+  get nameStartsWith() {
+    return (letter: string) => {
+      return this.firstname[0] == letter;
+    }
+  }
+  
   // Define a mutation for the vuex getter.
   // NOTE this only works for getters.
   set fullname( name :string ) {
