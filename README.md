@@ -187,7 +187,7 @@ export class UserStore extends VuexModule.With({ namespaced: "user" }) {
   }
 
   $watch = {
-    fullname( newValue ) { console.log( `Fullname has changed ${newValue}` },
+    fullname( newValue ) { console.log( `Fullname has changed ${newValue}`) },
   }
 
   $subscribe = {
