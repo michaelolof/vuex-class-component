@@ -28,12 +28,12 @@
     "@vue/test-utils": "^1.0.0-beta.29",
     "jest": "^24.5.0",
     "ts-jest": "^24.0.0",
-    "ts-loader": "^5.3.1",
+    "ts-loader": "^9.4.2",
     "typescript": "^3.2.2",
     "vue": "^2.6.10",
     "vue-template-compiler": "^2.6.10",
     "vuex": "^3.1.0",
-    "webpack": "^4.28.0"
+    "webpack": "^5.75.0"
   },
   "dependencies": {
     "object.getownpropertydescriptors": "^2.0.3",
